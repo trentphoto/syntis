@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { getUserRoleFromSession } from "@/lib/supabase/getUserRole";
-import RoleBanner from "@/components/ui/RoleBanner";
+import RoleBanner from "@/components/RoleBanner";
+import { Toaster } from "@/components/ui/sonner";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -39,6 +40,7 @@ export default async function RootLayout({
           {children}
         </div>
 
+        <Toaster />
         
       </body>
     </html>
