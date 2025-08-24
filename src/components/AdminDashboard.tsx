@@ -8,6 +8,7 @@ import Footer from "@/components/footer";
 import { InfoIcon, Users, DollarSign, Activity, FilePlus, Zap, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import AdminDashboardClient from './AdminDashboardClient'; // Dynamically imported client-side component
 
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
@@ -104,30 +105,64 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 items-start">
-          <h2 className="font-bold text-2xl mb-4">Your user details</h2>
-          <div className="flex gap-4 items-start">
-            <div className="text-sm">
-              <div className="font-medium">Role</div>
-              <div className="text-xs text-foreground/80">{userRole?.role ?? 'No role assigned'}</div>
-              {userRole?.assigned_at ? (
-                <div className="text-foreground/60 text-xs">Assigned: {new Date(userRole.assigned_at).toLocaleString()}</div>
-              ) : null}
-            </div>
-
-            <pre className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-              {JSON.stringify(data.claims, null, 2)}
-            </pre>
-          </div>
-        </div>
-
-          <div>
-            <Link href="/admin/subadmin" className="text-sm underline">
-              <Button>
-                Go to Sub-Admin Panel
+        <header className="border-b border-border bg-card">
+          <div className="flex h-14 items-center justify-between px-6">
+            <nav className="flex items-center space-x-6">
+              <Link href="/" className="inline-block">
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                  Dashboard
+                </Button>
+              </Link>
+              <Link href="/admin/client-manager" className="inline-block">
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                  Clients
+                </Button>
+              </Link>
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                Analytics
               </Button>
-            </Link>
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                Settings
+              </Button>
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                Audit
+              </Button>
+            </nav>
           </div>
+        </header>
+
+        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Your user details</CardTitle>
+              <CardDescription className="text-sm">Role and JWT claims</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="text-sm mb-4">
+                  <div className="font-medium">Role</div>
+                  <div className="text-xs text-foreground/80">{userRole?.role ?? 'No role assigned'}</div>
+                  {userRole?.assigned_at ? (
+                    <div className="text-foreground/60 text-xs">Assigned: {new Date(userRole.assigned_at).toLocaleString()}</div>
+                  ) : null}
+                </div>
+
+                <pre className="text-xs font-mono p-3 rounded border border-gray-700 bg-gray-200">
+                  {JSON.stringify(data.claims, null, 2)}
+                </pre>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              Header
+            </CardHeader>
+            <CardContent>
+              Content
+            </CardContent>
+          </Card>
+
+        </div>
 
           {/* Quick Actions */}
           <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -142,16 +177,12 @@ export default async function AdminDashboard() {
                     <Button variant="outline" className="flex items-center gap-2"><FilePlus /> Create new client</Button>
                   </Link>
 
-                  <Link href="#/risk-overrides">
-                    <Button variant="outline" className="flex items-center gap-2"><Zap /> Override risk scores</Button>
+                  <Link href="/risk-scores">
+                    <Button variant="outline" className="flex items-center gap-2"><Zap /> Risk scores</Button>
                   </Link>
 
-                  <Link href="#/support/escalations">
-                    <Button variant="outline" className="flex items-center gap-2"><LifeBuoy /> Support escalations</Button>
-                  </Link>
-
-                  <Link href="#/programs/deploy">
-                    <Button variant="outline" className="flex items-center gap-2"><Zap /> Deploy program templates</Button>
+                  <Link href="/support">
+                    <Button variant="outline" className="flex items-center gap-2"><LifeBuoy />Support tickets</Button>
                   </Link>
                 </div>
               </CardContent>
@@ -165,6 +196,7 @@ export default async function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
                   <div className="p-3 border rounded">
                     <div className="flex items-center justify-between">
                       <div>
@@ -173,7 +205,18 @@ export default async function AdminDashboard() {
                       </div>
                       <Users className="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <div className="text-xs text-muted-foreground mt-2">Active clients with at least one supplier: {activeClientsCount}</div>
+                    {/* moved active clients stat into its own card below */}
+                  </div>
+                  
+                  <div className="p-3 border rounded">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-medium">Active clients</div>
+                        <div className="text-2xl font-bold">{activeClientsCount}</div>
+                      </div>
+                      <Users className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-2">Clients that have at least one enrolled supplier</div>
                   </div>
 
                   <div className="p-3 border rounded">
@@ -213,12 +256,12 @@ export default async function AdminDashboard() {
             </Card>
           </div>
 
-          {/* Existing Clients table preserved below for detail */}
-          <div className="flex flex-col gap-2 items-start">
+          {/* Clients section */}
+          <div className="flex flex-col gap-2 items-start mb-8">
             <h2 className="font-bold text-2xl mb-4">Clients</h2>
             {clientsError ? (
               <div className="text-red-600">Error fetching clients: {String(clientsError.message ?? clientsError)}</div>
-      ) : typedClients && typedClients.length > 0 ? (
+              ) : typedClients && typedClients.length > 0 ? (
                 <div className="overflow-x-auto w-full">
                   <table className="min-w-full border rounded shadow-sm bg-background">
                     <thead>
@@ -244,7 +287,25 @@ export default async function AdminDashboard() {
             ) : (
               <div className="text-sm text-foreground/70">No clients found. Ensure your `clients` table has public read access or check RLS policies.</div>
             )}
+            <Button asChild variant="default" className="mt-4">
+              <Link href="/admin/client-manager">Manage clients</Link>
+            </Button>
           </div>
+      </div>
+
+      {/* divider */}
+      <div className="w-full border-t border-border my-8" />
+
+      {/* Render the client-side admin UI (charts, audit, client quick view) */}
+      {/* Imported dynamically to avoid SSR issues with Recharts which requires window */}
+      <div className="w-full">
+        <p>Client-side only admin UI (charts, audit, quick views)</p>
+        <p>Dynamically import without SSR because Recharts requires window</p>
+        <p>The dynamic import is defined below to keep top-level imports tidy</p>
+
+        <div className="w-full border-t border-border my-8" />
+
+        <AdminDashboardClient />
       </div>
 
       <Footer />

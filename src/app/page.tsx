@@ -1,17 +1,41 @@
-import MainNav from "@/components/MainNav";
-import { hasEnvVars } from "@/lib/utils";
-import Footer from "@/components/footer";
 import { getUserRoleFromSession } from "@/lib/supabase/getUserRole";
 import AdminDashboard from "@/components/AdminDashboard";
 import ClientDashboard from "@/components/ClientDashboard";
+import { createClient } from "@/lib/supabase/server";
 import SupplierDashboard from "@/components/SupplierDashboard";
+import RoleBanner from "@/components/RoleBanner";
 
 export default async function Home() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || !data?.claims) {
+    // If no user claims, redirect to login
+    // This should be handled by middleware, but as a fallback
+    return (
+      <main className="min-h-screen flex flex-col items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+          <p>Please log in to continue.</p>
+          {error && <p className="text-red-500 mt-2">Error: {error.message}</p>}
+        </div>
+      </main>
+    );
+  }
+
   const roleRow = await getUserRoleFromSession();
   const role = roleRow?.role ?? null;
 
   const renderDashboard = () => {
-    if (!role) return null;
+    if (!role) {
+      return (
+        <div className="text-center">
+          <h2 className="font-medium text-xl mb-4">No Role Assigned</h2>
+          <p>Your account doesn't have a role assigned yet. Please contact an administrator.</p>
+        </div>
+      );
+    }
+    
     const r = role.toLowerCase();
     if (r === "super_admin") {
       return <AdminDashboard />;
@@ -27,16 +51,10 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center">
-        <div className="flex-1 flex flex-col gap-20">
-            {role ? (
-              renderDashboard()
-            ) : (
-              <>
-                <h2 className="font-medium text-xl mb-4">Next steps</h2>
-                {hasEnvVars ? <p>Logged in</p> : <p>Not logged in.</p>}
-              </>
-            )}
-        </div>
+      <div className="flex-1 flex flex-col gap-20 p-8">
+        <RoleBanner />
+        {renderDashboard()}
+      </div>
     </main>
   );
 }

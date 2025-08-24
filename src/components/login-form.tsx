@@ -38,11 +38,11 @@ export function LoginForm({
         password,
       });
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
+      // Redirect to home page after successful login
+      router.push("/");
+      // Don't set isLoading to false on success - let the navigation handle it
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred");
-    } finally {
       setIsLoading(false);
     }
   };
@@ -68,6 +68,7 @@ export function LoginForm({
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -75,7 +76,10 @@ export function LoginForm({
                   <Label htmlFor="password">Password</Label>
                   <Link
                     href="/auth/forgot-password"
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    className={cn(
+                      "ml-auto inline-block text-sm underline-offset-4 hover:underline",
+                      isLoading && "pointer-events-none opacity-50"
+                    )}
                   >
                     Forgot your password?
                   </Link>
@@ -86,6 +90,7 @@ export function LoginForm({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
@@ -97,7 +102,10 @@ export function LoginForm({
               Don&apos;t have an account?{" "}
               <Link
                 href="/auth/sign-up"
-                className="underline underline-offset-4"
+                className={cn(
+                  "underline underline-offset-4",
+                  isLoading && "pointer-events-none opacity-50"
+                )}
               >
                 Sign up
               </Link>

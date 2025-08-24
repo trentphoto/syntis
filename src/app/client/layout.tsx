@@ -1,7 +1,7 @@
 import MainNav from "@/components/MainNav";
 import Footer from "@/components/footer";
 
-export default function ProtectedLayout({
+export default function ClientLayout({
   children,
 }: {
   children: React.ReactNode;
