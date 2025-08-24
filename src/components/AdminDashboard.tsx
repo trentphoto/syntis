@@ -4,10 +4,12 @@ import { Metadata } from 'next';
 
 import MainNav from "@/components/MainNav";
 import Footer from "@/components/footer";
+import AdminNavClient from "@/components/AdminNavClient";
 
-import { InfoIcon, Users, DollarSign, Activity, FilePlus, Zap, LifeBuoy } from "lucide-react";
+import { InfoIcon, Users, DollarSign, Activity, FilePlus, Zap, LifeBuoy, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import AdminDashboardClient from './AdminDashboardClient'; // Dynamically imported client-side component
 
 import { createClient } from '@/lib/supabase/server';
@@ -95,41 +97,18 @@ export default async function AdminDashboard() {
   return (
     <main className="min-h-screen flex flex-col items-center">
 
-      <MainNav />
+      <MainNav header="Admin Dashboard" />
     
       <div className="flex-1 w-full flex flex-col gap-12">
+
+        <AdminNavClient />
+
         <div className="w-full">
           <div className="bg-accent text-sm p-3 rounded-md text-foreground flex gap-3 items-center">
             <InfoIcon size="16" strokeWidth={2} />
             Welcome to your Admin Dashboard. Here you can manage clients, view platform metrics, and perform administrative tasks.
           </div>
         </div>
-
-        <header className="border-b border-border bg-card">
-          <div className="flex h-14 items-center justify-between px-6">
-            <nav className="flex items-center space-x-6">
-              <Link href="/" className="inline-block">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                  Dashboard
-                </Button>
-              </Link>
-              <Link href="/admin/client-manager" className="inline-block">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                  Clients
-                </Button>
-              </Link>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                Analytics
-              </Button>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                Settings
-              </Button>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                Audit
-              </Button>
-            </nav>
-          </div>
-        </header>
 
         <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -257,40 +236,52 @@ export default async function AdminDashboard() {
           </div>
 
           {/* Clients section */}
-          <div className="flex flex-col gap-2 items-start mb-8">
-            <h2 className="font-bold text-2xl mb-4">Clients</h2>
-            {clientsError ? (
-              <div className="text-red-600">Error fetching clients: {String(clientsError.message ?? clientsError)}</div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Clients</CardTitle>
+              <CardDescription className="text-muted-foreground">Preview of recent clients. Click "Manage clients" for full management capabilities.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {clientsError ? (
+                <div className="text-red-600">Error fetching clients: {String(clientsError.message ?? clientsError)}</div>
               ) : typedClients && typedClients.length > 0 ? (
-                <div className="overflow-x-auto w-full">
-                  <table className="min-w-full border rounded shadow-sm bg-background">
-                    <thead>
-                      <tr className="bg-accent text-foreground/90">
-                        <th className="px-4 py-2 text-left font-semibold">Name</th>
-                        <th className="px-4 py-2 text-left font-semibold">Email</th>
-                        <th className="px-4 py-2 text-left font-semibold">Phone</th>
-                        <th className="px-4 py-2 text-left font-semibold">Created At</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                    {typedClients.map((client: ClientRow) => (
-                      <tr key={client.id} className="border-b last:border-b-0 hover:bg-accent/30">
-                      <td className="px-4 py-2 font-medium">{client.name}</td>
-                      <td className="px-4 py-2">{client.contact_email}</td>
-                      <td className="px-4 py-2">{client.contact_phone ?? <span className="text-foreground/50">—</span>}</td>
-                      <td className="px-4 py-2 text-xs">{client.created_at ? new Date(client.created_at).toLocaleString() : "—"}</td>
-                      </tr>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-muted-foreground">Name</TableHead>
+                      <TableHead className="text-muted-foreground">Contact Email</TableHead>
+                      <TableHead className="text-muted-foreground">Created</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {typedClients.slice(0, 5).map((client: ClientRow) => (
+                      <TableRow key={client.id} className="cursor-pointer hover:bg-muted/50">
+                        <TableCell>
+                          <span className="text-foreground font-medium">{client.name}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-muted-foreground">{client.contact_email}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-muted-foreground">{client.created_at ? new Date(client.created_at).toISOString().slice(0, 10) : "-"}</span>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                    </tbody>
-                  </table>
-                </div>
-            ) : (
-              <div className="text-sm text-foreground/70">No clients found. Ensure your `clients` table has public read access or check RLS policies.</div>
-            )}
-            <Button asChild variant="default" className="mt-4">
-              <Link href="/admin/client-manager">Manage clients</Link>
-            </Button>
-          </div>
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-sm text-foreground/70">No clients found. Ensure your `clients` table has public read access or check RLS policies.</div>
+              )}
+              <div className="flex justify-start mt-4">
+                <Button asChild variant="default">
+                  <Link href="/admin/client-manager">
+                    Manage clients
+                    <ArrowRight className="mr-1" />
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
       </div>
 
       {/* divider */}
