@@ -11,7 +11,7 @@ export default function AdminNav({ className = "" }: AdminNavProps) {
   const pathname = usePathname();
 
   const navItems = [
-    { href: "/admin", label: "Dashboard" },
+    { href: "/", label: "Dashboard" },
     { href: "/admin/client-manager", label: "Clients" },
     { href: "/admin/risk-factors-manager", label: "Risk Factors" },
     { href: "/admin/analytics", label: "Analytics" },
@@ -25,7 +25,7 @@ export default function AdminNav({ className = "" }: AdminNavProps) {
         <nav className="flex items-center space-x-6">
           {navItems.map((item) => {
             const isActive = pathname === item.href || 
-              (item.href !== "/admin" && pathname.startsWith(item.href));
+              (item.href !== "/" && pathname.startsWith(item.href));
             
             return (
               <Link key={item.href} href={item.href} className="inline-block">
