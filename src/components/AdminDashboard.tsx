@@ -6,7 +6,7 @@ import MainNav from "@/components/MainNav";
 import Footer from "@/components/footer";
 import AdminNavClient from "@/components/AdminNavClient";
 
-import { InfoIcon, Users, DollarSign, Activity, FilePlus, Zap, LifeBuoy, ArrowRight } from "lucide-react";
+import { InfoIcon, Users, DollarSign, Activity, FilePlus, Zap, LifeBuoy, ArrowRight, UserPlus, Target, BarChart3, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -61,6 +61,14 @@ export default async function AdminDashboard() {
   type ClientRow = Tables<"clients">;
   const typedClients = (clients as unknown) as ClientRow[] | null;
 
+  // Fetch client_suppliers view for better relationship data
+  const { data: clientSuppliersData, error: clientSuppliersError } = await supabase
+    .from('client_suppliers')
+    .select('client_id, supplier_id, relationship_start_date, relationship_status, supplier_status');
+
+  type ClientSupplierRow = Tables<'client_suppliers'>;
+  const typedClientSuppliers = (clientSuppliersData as unknown) as ClientSupplierRow[] | null;
+
   // Fetch suppliers (used for total suppliers and active clients calculation)
   const { data: suppliersData, error: suppliersError } = await supabase
     .from('suppliers')
@@ -84,6 +92,45 @@ export default async function AdminDashboard() {
   const totalSuppliersEnrolled = typedSuppliers ? typedSuppliers.filter(s => s.client_id).length : 0;
   const activeClientsCount = typedSuppliers ? new Set(typedSuppliers.filter(s => s.client_id).map(s => s.client_id)).size : 0;
 
+  // Calculate the 5 Client & Supplier Management KPIs
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const ninetyDaysAgo = new Date(now.getTime() - (90 * 24 * 60 * 60 * 1000));
+
+  // 1. Total Active Clients (clients with at least one enrolled supplier)
+  const totalActiveClients = typedClientSuppliers ? 
+    new Set(typedClientSuppliers.filter(cs => cs.relationship_status === 'active').map(cs => cs.client_id)).size : 0;
+
+  // 2. New Clients This Month
+  const newClientsThisMonth = typedClients ? 
+    typedClients.filter(client => {
+      if (!client.created_at) return false;
+      const createdDate = new Date(client.created_at);
+      return createdDate >= firstDayOfMonth;
+    }).length : 0;
+
+  // 3. Client Retention Rate (clients with 90+ day relationships)
+  const clientsWithLongTermRelationships = typedClientSuppliers ? 
+    new Set(typedClientSuppliers.filter(cs => {
+      if (!cs.relationship_start_date || cs.relationship_status !== 'active') return false;
+      const startDate = new Date(cs.relationship_start_date);
+      return startDate <= ninetyDaysAgo;
+    }).map(cs => cs.client_id)).size : 0;
+  
+  const clientRetentionRate = totalActiveClients > 0 ? 
+    Math.round((clientsWithLongTermRelationships / totalActiveClients) * 100) : 0;
+
+  // 4. Average Suppliers per Client
+  const averageSuppliersPerClient = totalActiveClients > 0 ? 
+    totalSuppliersEnrolled / totalActiveClients : 0;
+
+  // 5. Supplier Enrollment Rate (active vs total suppliers)
+  const totalSuppliers = typedSuppliers ? typedSuppliers.length : 0;
+  const activeSuppliers = typedSuppliers ? 
+    typedSuppliers.filter(s => s.status === 'active').length : 0;
+  const supplierEnrollmentRate = totalSuppliers > 0 ? 
+    Math.round((activeSuppliers / totalSuppliers) * 100) : 0;
+
   const totalRevenue = (renewalsData ?? []).reduce((sum, r: any) => {
     const amt = Number(r?.amount ?? 0) || 0;
     return sum + amt;
@@ -93,6 +140,15 @@ export default async function AdminDashboard() {
     const s = (a?.status ?? '').toLowerCase();
     return ['pending', 'in_progress', 'open'].includes(s);
   }).length;
+
+  // Prepare KPI data for client component
+  const kpiData = {
+    totalActiveClients,
+    newClientsThisMonth,
+    clientRetentionRate,
+    averageSuppliersPerClient,
+    supplierEnrollmentRate
+  };
 
   return (
     <main className="min-h-screen flex flex-col items-center">
@@ -108,6 +164,64 @@ export default async function AdminDashboard() {
             <InfoIcon size="16" strokeWidth={2} />
             Welcome to your Admin Dashboard. Here you can manage clients, view platform metrics, and perform administrative tasks.
           </div>
+        </div>
+
+        {/* Client & Supplier Management KPI Cards - Moved to top */}
+        <div className="w-full grid grid-cols-1 md:grid-cols-5 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Active Clients</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{kpiData.totalActiveClients}</div>
+              <p className="text-xs text-muted-foreground">Clients with enrolled suppliers</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">New Clients This Month</CardTitle>
+              <UserPlus className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{kpiData.newClientsThisMonth}</div>
+              <p className="text-xs text-muted-foreground">Clients created this month</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Client Retention Rate</CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{kpiData.clientRetentionRate}%</div>
+              <p className="text-xs text-muted-foreground">90+ day relationships</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Avg Suppliers per Client</CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{kpiData.averageSuppliersPerClient.toFixed(1)}</div>
+              <p className="text-xs text-muted-foreground">Average enrollment</p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Supplier Enrollment Rate</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{kpiData.supplierEnrollmentRate}%</div>
+              <p className="text-xs text-muted-foreground">Completed enrollments</p>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">

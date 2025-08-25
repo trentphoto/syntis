@@ -20,7 +20,6 @@ import {
   Cell,
 } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { Users, DollarSign, TrendingUp, Activity, AlertCircle } from "lucide-react"
 
 // Client data from the provided JSON (mocked here for UI)
 const clientsData = [
@@ -86,66 +85,6 @@ export default function AdminDashboardClient() {
       <h1>AdminDashboardClient</h1>
 
       <main className="space-y-8">
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Clients</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">
-                {loading ? <SkeletonBox className="h-8 w-16 rounded-md bg-muted/20 animate-pulse" /> : "3"}
-              </div>
-              <p className="text-xs text-muted-foreground">+2 from last month</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{loading ? <SkeletonBox className="h-8 w-24 rounded-md bg-muted/20 animate-pulse" /> : "$67,000"}</div>
-              <p className="text-xs text-muted-foreground">+12% from last month</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Growth</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{loading ? <SkeletonBox className="h-8 w-16 rounded-md bg-muted/20 animate-pulse" /> : "+24%"}</div>
-              <p className="text-xs text-muted-foreground">+4% from last month</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Active Users</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{loading ? <SkeletonBox className="h-8 w-20 rounded-md bg-muted/20 animate-pulse" /> : "1,234"}</div>
-              <p className="text-xs text-muted-foreground">+8% from last month</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Issues</CardTitle>
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-foreground">{loading ? <SkeletonBox className="h-8 w-8 rounded-md bg-muted/20 animate-pulse" /> : "2"}</div>
-              <p className="text-xs text-muted-foreground">-3 from last month</p>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Full-width Clients Chart */}
         <Card>
           <CardHeader>
