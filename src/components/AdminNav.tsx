@@ -28,19 +28,21 @@ export default function AdminNav({ className = "" }: AdminNavProps) {
               (item.href !== "/" && pathname.startsWith(item.href));
             
             return (
-              <Link key={item.href} href={item.href} className="inline-block">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className={`${
-                    isActive 
-                      ? "text-foreground bg-accent" 
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
+              <Button 
+                key={item.href}
+                variant="ghost" 
+                size="sm" 
+                asChild
+                className={`${
+                  isActive 
+                    ? "text-foreground bg-accent" 
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Link href={item.href}>
                   {item.label}
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             );
           })}
         </nav>
