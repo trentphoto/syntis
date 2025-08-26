@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeftIcon, CalendarIcon, MailIcon, PhoneIcon, MapPinIcon, UserIcon, EditIcon, TrashIcon, BuildingIcon } from "lucide-react"
+import { CalendarIcon, MailIcon, PhoneIcon, MapPinIcon, UserIcon, EditIcon, TrashIcon, BuildingIcon } from "lucide-react"
 import { useClientManager, type Client } from "@/hooks/useClientManager"
 import AdminNavClient from "@/components/AdminNavClient"
+import { AddSupplierToClientDialog } from "@/components/AddSupplierToClientDialog"
 
 export default function ClientDetailPage() {
   const params = useParams()
@@ -26,34 +27,21 @@ export default function ClientDetailPage() {
     contact_phone: "",
     address: ""
   })
-  const [suppliers, setSuppliers] = useState<any[]>([])
+  const [suppliers, setSuppliers] = useState<Array<{
+    supplier_id: string;
+    company_name: string;
+    contact_email: string;
+    business_type?: string;
+    overall_risk_level?: 'low' | 'medium' | 'high';
+    supplier_status?: 'active' | 'inactive';
+    relationship_status?: 'active' | 'inactive';
+    relationship_start_date?: string;
+  }>>([])
   const [suppliersLoading, setSuppliersLoading] = useState(false)
 
   const { fetchClient, saveEdit, deleteClient, loading: actionLoading } = useClientManager()
 
-  useEffect(() => {
-    loadClient()
-  }, [clientId])
-
-  async function loadClient() {
-    setLoading(true)
-    const clientData = await fetchClient(clientId)
-    if (clientData) {
-      setClient(clientData)
-      setEditForm({
-        name: clientData.name,
-        contact_email: clientData.contact_email,
-        contact_phone: clientData.contact_phone || "",
-        address: clientData.address || ""
-      })
-      await loadSuppliers(clientData.id)
-    } else {
-      setError("Failed to load client details")
-    }
-    setLoading(false)
-  }
-
-  async function loadSuppliers(clientId: string) {
+  const loadSuppliers = useCallback(async (clientId: string) => {
     setSuppliersLoading(true)
     try {
       const { createClient } = await import("@/lib/supabase/client")
@@ -75,7 +63,29 @@ export default function ClientDetailPage() {
     } finally {
       setSuppliersLoading(false)
     }
-  }
+  }, [])
+
+  const loadClient = useCallback(async () => {
+    setLoading(true)
+    const clientData = await fetchClient(clientId)
+    if (clientData) {
+      setClient(clientData)
+      setEditForm({
+        name: clientData.name,
+        contact_email: clientData.contact_email,
+        contact_phone: clientData.contact_phone || "",
+        address: clientData.address || ""
+      })
+      await loadSuppliers(clientData.id)
+    } else {
+      setError("Failed to load client details")
+    }
+    setLoading(false)
+  }, [clientId, fetchClient, loadSuppliers])
+
+  useEffect(() => {
+    loadClient()
+  }, [loadClient])
 
   const handleEdit = () => {
     setIsEditing(true)
@@ -143,7 +153,7 @@ export default function ClientDetailPage() {
     )
   }
 
-  const formatJsonField = (field: any) => {
+  const formatJsonField = (field: unknown) => {
     if (!field) return "Not set"
     if (Array.isArray(field)) {
       return field.length === 0 ? "Empty array" : field.join(", ")
@@ -411,13 +421,22 @@ export default function ClientDetailPage() {
       <div className="mt-8">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BuildingIcon className="h-5 w-5" />
-              Associated Suppliers
-            </CardTitle>
-            <CardDescription>
-              All suppliers associated with this client
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <BuildingIcon className="h-5 w-5" />
+                  Associated Suppliers
+                </CardTitle>
+                <CardDescription>
+                  All suppliers associated with this client
+                </CardDescription>
+              </div>
+              <AddSupplierToClientDialog 
+                clientId={client.id} 
+                clientName={client.name} 
+                onSupplierAdded={() => loadSuppliers(client.id)}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             {suppliersLoading ? (

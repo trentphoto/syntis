@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
-
+import Link from "next/link";
 export default function DebugPage() {
-  const [authStatus, setAuthStatus] = useState<any>(null);
+  const [authStatus, setAuthStatus] = useState<{
+    authenticated?: boolean;
+    role?: string;
+    claims?: { sub?: string };
+    error?: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,7 +18,7 @@ export default function DebugPage() {
         const data = await response.json();
         setAuthStatus(data);
       } catch (error) {
-        setAuthStatus({ error: "Failed to fetch auth status" });
+        setAuthStatus({ error: "Failed to fetch auth status: " + error });
       } finally {
         setLoading(false);
       }
@@ -48,7 +52,7 @@ export default function DebugPage() {
         alert(`Error: ${data.error}`);
       }
     } catch (error) {
-      alert("Failed to assign role");
+      alert("Failed to assign role: " + error);
     }
   };
 
@@ -71,7 +75,7 @@ export default function DebugPage() {
         {authStatus?.authenticated && !authStatus?.role && (
           <div className="bg-yellow-100 p-4 rounded">
             <h2 className="text-lg font-semibold mb-2">No Role Assigned</h2>
-            <p className="mb-4">Your account doesn't have a role assigned. Assign a role to continue:</p>
+            <p className="mb-4">Your account doesn&apos;t have a role assigned. Assign a role to continue:</p>
             <div className="space-x-2">
               <button
                 onClick={() => handleAssignRole("super_admin")}
@@ -99,12 +103,12 @@ export default function DebugPage() {
           <div className="bg-green-100 p-4 rounded">
             <h2 className="text-lg font-semibold mb-2">Role Assigned</h2>
             <p>Your role: <strong>{authStatus.role}</strong></p>
-            <a
+            <Link
               href="/"
               className="inline-block mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             >
               Go to Dashboard
-            </a>
+            </Link>
           </div>
         )}
 
@@ -112,12 +116,12 @@ export default function DebugPage() {
           <div className="bg-red-100 p-4 rounded">
             <h2 className="text-lg font-semibold mb-2">Not Authenticated</h2>
             <p>Please log in first.</p>
-            <a
+            <Link
               href="/auth/login"
               className="inline-block mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             >
               Go to Login
-            </a>
+            </Link>
           </div>
         )}
       </div>

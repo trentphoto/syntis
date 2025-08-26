@@ -23,7 +23,7 @@ export default async function Home() {
       return (
         <div className="text-center">
           <h2 className="font-medium text-xl mb-4">No Role Assigned</h2>
-          <p>Your account doesn't have a role assigned yet. Please contact an administrator.</p>
+          <p>Your account doesn&apos;t have a role assigned yet. Please contact an administrator.</p>
         </div>
       );
     }

@@ -22,7 +22,7 @@ type SupplierRow = {
   relationship_notes?: string | null;
 };
 
-export default async function ClientDetailPage({ params }: { params: { clientId: string } }) {
+export default async function ClientDetailPage({ params }: { params: Promise<{ clientId: string }> }) {
   const supabase = await createClient();
 
   // Await params in case it's a Promise (Next.js may provide params as a thenable in some flows)

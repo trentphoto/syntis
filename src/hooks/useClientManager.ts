@@ -8,11 +8,11 @@ export type Client = {
   contact_email: string
   contact_phone?: string | null
   address?: string | null
-  custom_branding?: any | null
-  custom_business_types?: any | null
-  custom_product_services?: any | null
-  enrollment_benefits?: any | null
-  enrollment_checklist?: any | null
+  custom_branding?: unknown | null
+  custom_business_types?: unknown | null
+  custom_product_services?: unknown | null
+  enrollment_benefits?: unknown | null
+  enrollment_checklist?: unknown | null
   use_custom_options?: boolean | null
   user_id?: string | null
   created_at?: string | null

@@ -12,7 +12,7 @@ export type RiskFactor = {
   is_active: boolean | null
   is_required: boolean | null
   ai_prompt_template: string | null
-  configuration: any | null
+  configuration: unknown | null
   created_at: string | null
   updated_at: string | null
 }

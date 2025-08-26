@@ -77,7 +77,7 @@ export async function POST(req: Request) {
       role_assigned: !roleInsertRes.error,
       message: "Client created successfully with user account and role assignment"
     })
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message ?? String(err) }, { status: 500 })
+  } catch (err: unknown) {
+    return NextResponse.json({ error: (err as Error)?.message ?? String(err) }, { status: 500 })
   }
 }

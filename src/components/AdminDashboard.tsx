@@ -31,7 +31,7 @@ export default async function AdminDashboard() {
   }
 
   // Extract user id from common JWT claim keys (supabase uses `sub`)
-  const claims = data.claims as Record<string, any>;
+  const claims = data.claims as Record<string, unknown>;
   const userId = claims?.sub ?? claims?.user_id ?? claims?.userId ?? null;
 
   // Fetch the user's active role from `user_roles`. Use maybeSingle since a role may not exist.
@@ -62,7 +62,7 @@ export default async function AdminDashboard() {
   const typedClients = (clients as unknown) as ClientRow[] | null;
 
   // Fetch client_suppliers view for better relationship data
-  const { data: clientSuppliersData, error: clientSuppliersError } = await supabase
+  const { data: clientSuppliersData } = await supabase
     .from('client_suppliers')
     .select('client_id, supplier_id, relationship_start_date, relationship_status, supplier_status');
 
@@ -70,7 +70,7 @@ export default async function AdminDashboard() {
   const typedClientSuppliers = (clientSuppliersData as unknown) as ClientSupplierRow[] | null;
 
   // Fetch suppliers (used for total suppliers and active clients calculation)
-  const { data: suppliersData, error: suppliersError } = await supabase
+  const { data: suppliersData } = await supabase
     .from('suppliers')
     .select('id, client_id, status');
 
@@ -131,12 +131,12 @@ export default async function AdminDashboard() {
   const supplierEnrollmentRate = totalSuppliers > 0 ? 
     Math.round((activeSuppliers / totalSuppliers) * 100) : 0;
 
-  const totalRevenue = (renewalsData ?? []).reduce((sum, r: any) => {
+  const totalRevenue = (renewalsData ?? []).reduce((sum, r: { amount?: number | string }) => {
     const amt = Number(r?.amount ?? 0) || 0;
     return sum + amt;
   }, 0);
 
-  const activeAssessmentsInProgress = (assessmentsData ?? []).filter((a: any) => {
+  const activeAssessmentsInProgress = (assessmentsData ?? []).filter((a: { status?: string }) => {
     const s = (a?.status ?? '').toLowerCase();
     return ['pending', 'in_progress', 'open'].includes(s);
   }).length;
@@ -353,7 +353,7 @@ export default async function AdminDashboard() {
           <Card>
             <CardHeader>
               <CardTitle>Recent Clients</CardTitle>
-              <CardDescription className="text-muted-foreground">Preview of recent clients. Click "Manage clients" for full management capabilities.</CardDescription>
+              <CardDescription className="text-muted-foreground">Preview of recent clients. Click &quot;Manage clients&quot; for full management capabilities.</CardDescription>
             </CardHeader>
             <CardContent>
               {clientsError ? (
@@ -384,7 +384,7 @@ export default async function AdminDashboard() {
                   </TableBody>
                 </Table>
               ) : (
-                <div className="text-sm text-foreground/70">No clients found. Ensure your `clients` table has public read access or check RLS policies.</div>
+                <div className="text-sm text-foreground/70">No clients found. Ensure your &quot;clients&quot; table has public read access or check RLS policies.</div>
               )}
               <div className="flex justify-start mt-4">
                 <Button asChild variant="default">

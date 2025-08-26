@@ -1,14 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { ArrowLeftIcon, PencilIcon, PlusIcon, TrashIcon } from "lucide-react"
+import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react"
 import { useClientManager, type CreateForm } from "@/hooks/useClientManager"
 import { TableSkeleton } from "@/components/TableSkeleton"
 import AdminNavClient from "@/components/AdminNavClient"
@@ -87,7 +86,7 @@ export default function ClientManagerPage() {
                     <div>
                       <label className="block text-sm font-medium mb-1">Password (optional)</label>
                       <Input type="password" {...register("password")} />
-                      <p className="text-xs text-muted-foreground mt-1">If provided, this will be set as the client's initial password.</p>
+                      <p className="text-xs text-muted-foreground mt-1">If provided, this will be set as the client&apos;s initial password.</p>
                     </div>
 
                     <DialogFooter>

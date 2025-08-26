@@ -29,7 +29,7 @@ export default function RoleBanner({ role }: Props) {
       await supabase.auth.signOut();
     } catch (err) {
       // best-effort: log error client-side
-      // eslint-disable-next-line no-console
+
       console.error("Logout failed", err);
     } finally {
       router.push("/auth/login");

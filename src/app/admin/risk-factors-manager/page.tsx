@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { PlusIcon, SearchIcon, PencilIcon, TrashIcon } from "lucide-react"
 import AdminNavClient from "@/components/AdminNavClient"
 import { TableSkeleton } from "@/components/TableSkeleton"
-import { useRiskFactorsManager, type RiskFactor, type CreateForm, type RiskArea } from "@/hooks/useRiskFactorsManager"
+import { useRiskFactorsManager, type CreateForm, type RiskArea } from "@/hooks/useRiskFactorsManager"
 
 export default function RiskFactorsManagerPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)

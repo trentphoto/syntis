@@ -10,7 +10,7 @@ export async function getUserRoleFromSession() {
     return null;
   }
 
-  const claims = data.claims as Record<string, any>;
+  const claims = data.claims as Record<string, unknown>;
   const userId = claims?.sub ?? claims?.user_id ?? claims?.userId ?? null;
   if (!userId) {
     return null;
