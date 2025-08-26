@@ -4,6 +4,7 @@ import ClientDashboard from "@/components/ClientDashboard";
 import { createClient } from "@/lib/supabase/server";
 import SupplierDashboard from "@/components/SupplierDashboard";
 import RoleBanner from "@/components/RoleBanner";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -11,16 +12,7 @@ export default async function Home() {
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims) {
     // If no user claims, redirect to login
-    // This should be handled by middleware, but as a fallback
-    return (
-      <main className="min-h-screen flex flex-col items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
-          <p>Please log in to continue.</p>
-          {error && <p className="text-red-500 mt-2">Error: {error.message}</p>}
-        </div>
-      </main>
-    );
+    redirect("/auth/login");
   }
 
   const roleRow = await getUserRoleFromSession();
