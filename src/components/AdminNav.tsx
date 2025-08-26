@@ -15,8 +15,8 @@ export default function AdminNav({ className = "" }: AdminNavProps) {
     { href: "/admin/client-manager", label: "Clients" },
     { href: "/admin/risk-factors-manager", label: "Risk Factors" },
     { href: "/admin/analytics", label: "Analytics" },
-    { href: "/admin/settings", label: "Settings" },
     { href: "/admin/audit", label: "Audit" },
+    { href: "/admin/settings", label: "Settings" },
   ];
 
   return (
