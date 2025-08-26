@@ -3,7 +3,6 @@ import AdminDashboard from "@/components/AdminDashboard";
 import ClientDashboard from "@/components/ClientDashboard";
 import { createClient } from "@/lib/supabase/server";
 import SupplierDashboard from "@/components/SupplierDashboard";
-import RoleBanner from "@/components/RoleBanner";
 import { redirect } from "next/navigation";
 
 export default async function Home() {
@@ -44,7 +43,6 @@ export default async function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center">
       <div className="flex-1 flex flex-col gap-20 p-8">
-        <RoleBanner role={role} />
         {renderDashboard()}
       </div>
     </main>
