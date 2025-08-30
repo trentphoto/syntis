@@ -284,3 +284,25 @@ Ensure the following environment variables are set:
 
 The implementation requires the following additional packages:
 - `@radix-ui/react-select`: For dropdown components in the admin dialog
+
+## Cystack API Integration
+
+### Rating Score System
+Cystack provides a rating score system with letter grades and detailed reasons:
+
+**Grade System:**
+- **Grade**: "B" (example grade)
+
+**Reason Codes:**
+- **0**: "No account or email leaks detected"
+- **1**: "TLS 1.3 with strong cipher (TLS_AES_256_GCM_SHA384) is used"
+- **2**: "No blacklisting detected"
+- **3**: "All subdomains are secured with HTTPS"
+- **4**: "Weak cipher suites detected (TLS 1.0/1.1 with CBC)"
+- **5**: "No WAF or perimeter firewall detected"
+
+### Implementation Notes
+- Each reason code corresponds to a specific security assessment
+- Multiple reasons can be returned for a single assessment
+- Grade is determined based on the combination of detected issues
+- Integration should handle both positive (0-3) and negative (4-5) reason codes
