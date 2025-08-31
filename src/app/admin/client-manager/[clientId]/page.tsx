@@ -85,7 +85,8 @@ export default function ClientDetailPage() {
 
   useEffect(() => {
     loadClient()
-  }, [loadClient])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId]) // Only depend on clientId, not loadClient
 
   const handleEdit = () => {
     setIsEditing(true)
