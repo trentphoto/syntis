@@ -14,8 +14,8 @@ export async function POST(req: Request) {
 
     // Check for admin role
     const userRole = await getUserRoleFromSession()
-    if (!userRole || (userRole.role !== 'super_admin' && userRole.role !== 'admin')) {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 })
+    if (!userRole || userRole.role !== 'super_admin') {
+      return NextResponse.json({ error: "Super admin access required" }, { status: 403 })
     }
 
     const body = await req.json()
@@ -44,11 +44,15 @@ export async function POST(req: Request) {
     }
 
     // Check if supplier with this email already exists
-    const { data: existingSupplier } = await supabase
+    const { data: existingSupplier, error: existingError } = await supabase
       .from("suppliers")
       .select("id")
       .eq("contact_email", contactEmail)
       .single()
+    
+    if (existingError && existingError.code !== 'PGRST116') {
+      return NextResponse.json({ error: existingError.message }, { status: 500 })
+    }
     
     if (existingSupplier) {
       return NextResponse.json({ 
@@ -59,18 +63,24 @@ export async function POST(req: Request) {
     // Create user account with temporary password
     const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8)
     
-    const { data: authData, error: createUserError } = await supabase.auth.admin.createUser({
+    const { data: authData, error: createUserError } = await supabase.auth.signUp({
       email: contactEmail,
       password: tempPassword,
-      email_confirm: true, // Auto-confirm email
-      user_metadata: {
-        company_name: companyName,
-        role: 'supplier'
+      options: {
+        data: {
+          company_name: companyName,
+          role: 'supplier'
+        },
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`
       }
     })
 
-    if (createUserError || !authData.user) {
-      return NextResponse.json({ error: createUserError?.message || "Failed to create user account" }, { status: 500 })
+    if (createUserError) {
+      return NextResponse.json({ error: createUserError.message }, { status: 500 })
+    }
+    
+    if (!authData.user) {
+      return NextResponse.json({ error: "Failed to create user account - no user data" }, { status: 500 })
     }
 
     // Create supplier profile linked to the user account
@@ -91,9 +101,12 @@ export async function POST(req: Request) {
       .single()
 
     if (supplierError) {
-      // If supplier creation fails, clean up the user account
-      await supabase.auth.admin.deleteUser(authData.user.id)
-      return NextResponse.json({ error: supplierError.message }, { status: 500 })
+      // Note: We can't delete the user account without admin privileges
+      // The user will need to confirm their email to activate the account
+      return NextResponse.json({ 
+        error: supplierError.message,
+        note: "User account created but needs email confirmation"
+      }, { status: 500 })
     }
 
     // Assign supplier role
@@ -137,7 +150,8 @@ export async function POST(req: Request) {
       supplier_id: supplierData.id,
       user_id: authData.user.id,
       temp_password: tempPassword, // Include for admin reference
-      message: "Supplier created successfully with login credentials"
+      contactEmail: contactEmail,
+      message: "Supplier created successfully. User will receive an email to confirm their account."
     })
 
   } catch (err: unknown) {

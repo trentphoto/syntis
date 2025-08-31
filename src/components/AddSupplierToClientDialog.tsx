@@ -190,6 +190,12 @@ export function AddSupplierToClientDialog({
       // Switch back to select mode and refresh suppliers
       setMode("select");
       await loadSuppliers();
+      
+      // Close the modal after successful creation
+      setOpen(false);
+      
+      // Notify parent component to refresh the suppliers list
+      onSupplierAdded();
     } catch (err) {
       console.error("Error creating supplier:", err);
       setError(err instanceof Error ? err.message : "Failed to create supplier");
