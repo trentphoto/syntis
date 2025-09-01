@@ -1376,3 +1376,21 @@ Scope Creep: Lock requirements to this scope; use change orders for extras.
 Performance: Monitor Supabase query times; add indexes if slow.
 
 For questions or refinements, ping the project lead with specific schema or API details!
+
+## UI/UX Guidelines
+
+### Link Styling
+- **Default link style**: Use chip-style links with gray background (`bg-muted`) and no border
+- **Hover effects**: Subtle color changes (text turns blue) or show small icons on hover
+- **Design philosophy**: Minimal, subtle, and not overly decorative
+- **Reference**: Follow the breadcrumb component styling pattern for consistency
+
+### Table Links
+- **Data table links**: Use chip-style appearance for links within table cells
+- **Hover states**: Subtle blue text color or small icon indicators
+- **Visual hierarchy**: Links should be clearly identifiable but not overpowering
+
+### General Styling
+- **Consistency**: Maintain consistent styling patterns across all components
+- **Subtlety**: Prefer understated design elements over flashy or overly decorative ones
+- **Accessibility**: Ensure good contrast and clear visual feedback for interactive elements

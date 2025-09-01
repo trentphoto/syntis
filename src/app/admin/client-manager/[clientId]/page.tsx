@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { CalendarIcon, MailIcon, PhoneIcon, MapPinIcon, UserIcon, EditIcon, TrashIcon, BuildingIcon } from "lucide-react"
+import { CalendarIcon, MailIcon, PhoneIcon, MapPinIcon, UserIcon, EditIcon, TrashIcon, BuildingIcon, HomeIcon } from "lucide-react"
 import { useClientManager, type Client } from "@/hooks/useClientManager"
 import AdminNavClient from "@/components/AdminNavClient"
+import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 import { AddSupplierToClientDialog } from "@/components/AddSupplierToClientDialog"
 
 export default function ClientDetailPage() {
@@ -144,8 +145,8 @@ export default function ClientDetailPage() {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <p className="text-destructive mb-4">{error || "Client not found"}</p>
-              <Link href="/admin/client-manager">
-                <Button>Return to Client Manager</Button>
+              <Link href="/admin/client-manager" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted text-muted-foreground hover:bg-muted/80 hover:text-blue-600 transition-colors text-xs">
+                ← Return to Client Manager
               </Link>
             </div>
           </div>
@@ -179,6 +180,14 @@ export default function ClientDetailPage() {
       <header className="mb-8">
         <div className="flex items-center justify-between">
           <div className="space-y-2">
+            <Breadcrumbs 
+              items={[
+                { label: "Dashboard", href: "/", icon: <HomeIcon className="h-3 w-3" /> },
+                { label: "Clients", href: "/admin/client-manager", icon: <UserIcon className="h-3 w-3" /> },
+                { label: client.name }
+              ]}
+              className="mb-2"
+            />
             <h1 className="text-4xl font-bold text-foreground">{client.name}</h1>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span className="font-mono bg-muted px-2 py-1 rounded">ID: {client.id}</span>

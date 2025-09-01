@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { PlusIcon, SearchIcon, PencilIcon, TrashIcon } from "lucide-react"
+import { PlusIcon, SearchIcon, PencilIcon, TrashIcon, HomeIcon, ShieldIcon } from "lucide-react"
 import AdminNavClient from "@/components/AdminNavClient"
 import { TableSkeleton } from "@/components/TableSkeleton"
 import { useRiskFactorsManager, type CreateForm, type RiskArea } from "@/hooks/useRiskFactorsManager"
+import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 
 export default function RiskFactorsManagerPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -70,6 +71,13 @@ export default function RiskFactorsManagerPage() {
       
       <div className="p-6">
         <header className="mb-6">
+          <Breadcrumbs 
+            items={[
+              { label: "Dashboard", href: "/", icon: <HomeIcon className="h-3 w-3" /> },
+              { label: "Risk Factors", icon: <ShieldIcon className="h-3 w-3" /> }
+            ]}
+            className="mb-4"
+          />
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-medium text-foreground">Risk Factors Manager</h1>

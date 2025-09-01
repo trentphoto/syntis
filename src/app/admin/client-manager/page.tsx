@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
+import Link from "next/link"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { PencilIcon, PlusIcon, TrashIcon } from "lucide-react"
+import { PencilIcon, PlusIcon, TrashIcon, HomeIcon, UserIcon } from "lucide-react"
 import { useClientManager, type CreateForm } from "@/hooks/useClientManager"
 import { TableSkeleton } from "@/components/TableSkeleton"
 import AdminNavClient from "@/components/AdminNavClient"
+import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 
 export default function ClientManagerPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -50,6 +52,13 @@ export default function ClientManagerPage() {
       <div className="p-6">
 
       <header className="mb-6">
+        <Breadcrumbs 
+          items={[
+            { label: "Dashboard", href: "/", icon: <HomeIcon className="h-3 w-3" /> },
+            { label: "Clients", icon: <UserIcon className="h-3 w-3" /> }
+          ]}
+          className="mb-4"
+        />
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-medium text-foreground">Client Manager</h1>
@@ -121,6 +130,7 @@ export default function ClientManagerPage() {
               columns={[
                 { key: 'name', label: 'Name', skeletonWidth: 'w-32' },
                 { key: 'email', label: 'Contact Email', skeletonWidth: 'w-48' },
+                { key: 'suppliers', label: 'Total Suppliers', skeletonWidth: 'w-24' },
                 { key: 'created', label: 'Created', skeletonWidth: 'w-24' },
               ]} 
             />
@@ -130,6 +140,7 @@ export default function ClientManagerPage() {
                 <TableRow>
                   <TableHead className="text-muted-foreground">Name</TableHead>
                   <TableHead className="text-muted-foreground">Contact Email</TableHead>
+                  <TableHead className="text-muted-foreground">Total Suppliers</TableHead>
                   <TableHead className="text-muted-foreground">Created</TableHead>
                   <TableHead className="text-muted-foreground">Actions</TableHead>
                 </TableRow>
@@ -155,6 +166,12 @@ export default function ClientManagerPage() {
                       ) : (
                         <span className="text-muted-foreground">{c.contact_email}</span>
                       )}
+                    </TableCell>
+
+                    <TableCell>
+                      <span className="text-muted-foreground">
+                        {c.supplier_count || 0}
+                      </span>
                     </TableCell>
 
                     <TableCell>

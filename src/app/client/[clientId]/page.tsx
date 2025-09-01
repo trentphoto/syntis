@@ -147,7 +147,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ c
       )}
 
       <div className="mt-6">
-        <Link href="/client" className="text-sm text-blue-600 hover:underline">
+        <Link href="/client" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted text-muted-foreground hover:bg-muted/80 hover:text-blue-600 transition-colors text-xs">
           ← Back to clients
         </Link>
       </div>

@@ -13,6 +13,7 @@ export default function AdminNav({ className = "" }: AdminNavProps) {
   const navItems = [
     { href: "/", label: "Dashboard" },
     { href: "/admin/client-manager", label: "Clients" },
+    { href: "/admin/supplier-manager", label: "Suppliers" },
     { href: "/admin/risk-factors-manager", label: "Risk Factors" },
     { href: "/admin/analytics", label: "Analytics" },
     { href: "/admin/audit", label: "Audit" },

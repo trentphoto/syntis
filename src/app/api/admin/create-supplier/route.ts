@@ -26,7 +26,8 @@ export async function POST(req: Request) {
       address, 
       businessType, 
       ein, 
-      domain 
+      domain,
+      clientId
     } = body
 
     if (!companyName || !contactEmail) {
@@ -95,6 +96,7 @@ export async function POST(req: Request) {
         business_type: businessType || null,
         ein: ein || null,
         domain: domain || null,
+        client_id: clientId || null,
         status: "pending",
       })
       .select()
@@ -120,6 +122,23 @@ export async function POST(req: Request) {
     if (roleError) {
       console.error("Error assigning supplier role:", roleError)
       // Don't fail the request, but log the error
+    }
+
+    // If a client is assigned, create the relationship
+    if (clientId) {
+      const { error: relationshipError } = await supabase
+        .from("supplier_client_relationships")
+        .insert({
+          client_id: clientId,
+          supplier_id: authData.user.id,
+          status: "active",
+          relationship_start_date: new Date().toISOString(),
+        })
+
+      if (relationshipError) {
+        console.error("Error creating supplier-client relationship:", relationshipError)
+        // Don't fail the request, but log the error
+      }
     }
 
     // Send invitation email

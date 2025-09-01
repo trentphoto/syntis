@@ -15,6 +15,7 @@ export type Client = {
   enrollment_checklist?: unknown | null
   use_custom_options?: boolean | null
   user_id?: string | null
+  supplier_count?: number
   created_at?: string | null
   updated_at?: string | null
 }
@@ -36,17 +37,37 @@ export function useClientManager() {
   const fetchClients = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      // First get all clients
+      const { data: clientsData, error: clientsError } = await supabase
         .from("clients")
         .select("*")
         .order("created_at", { ascending: false })
       
-      if (error) {
-        console.error("Error fetching clients:", error)
+      if (clientsError) {
+        console.error("Error fetching clients:", clientsError)
         toast.error("Unable to load client list. Please try refreshing the page.")
         return
       }
-      setClients((data || []) as Client[])
+
+      // Get supplier counts for each client
+      const clientsWithSupplierCounts = await Promise.all(
+        (clientsData || []).map(async (client) => {
+          const { count, error: countError } = await supabase
+            .from("supplier_client_relationships")
+            .select("*", { count: "exact", head: true })
+            .eq("client_id", client.id)
+            .eq("status", "active")
+
+          if (countError) {
+            console.error(`Error counting suppliers for client ${client.id}:`, countError)
+            return { ...client, supplier_count: 0 }
+          }
+
+          return { ...client, supplier_count: count || 0 }
+        })
+      )
+
+      setClients(clientsWithSupplierCounts as Client[])
     } catch (err) {
       console.error("Unexpected error fetching clients:", err)
       toast.error("Failed to load clients. Please check your connection and try again.")
