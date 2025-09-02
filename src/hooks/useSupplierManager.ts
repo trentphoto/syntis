@@ -87,7 +87,7 @@ export function useSupplierManager() {
       const clientIds = new Set<string>()
       suppliersData?.forEach(supplier => {
         if (supplier.supplier_client_relationships) {
-          supplier.supplier_client_relationships.forEach((rel: any) => {
+          supplier.supplier_client_relationships.forEach((rel: { client_id: string }) => {
             if (rel.client_id) {
               clientIds.add(rel.client_id)
             }
@@ -114,7 +114,7 @@ export function useSupplierManager() {
       // Merge the data - get the first active relationship for each supplier
       const suppliersWithClients = suppliersData?.map(supplier => {
         const activeRelationship = supplier.supplier_client_relationships?.find(
-          (rel: any) => rel.status === 'active'
+          (rel: { status: string; client_id: string; relationship_start_date: string | null }) => rel.status === 'active'
         )
         
         return {
@@ -158,7 +158,7 @@ export function useSupplierManager() {
 
       // Get the active relationship and fetch client data
       const activeRelationship = data.supplier_client_relationships?.find(
-        (rel: any) => rel.status === 'active'
+        (rel: { status: string; client_id: string; relationship_start_date: string | null }) => rel.status === 'active'
       )
 
       if (activeRelationship?.client_id) {

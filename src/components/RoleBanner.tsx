@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
+import Link from "next/link";
 
 type Props = {
   role?: string | null;
@@ -41,7 +42,9 @@ export default function RoleBanner({ role }: Props) {
       <div className="flex items-center justify-between">
         <div>SyNtis</div>
         <div className="flex items-center gap-4">
-          <div>{label}</div>
+          <Link href="/" className="text-white">
+            <div>{label}</div>
+          </Link>
           <Button variant="link" size="sm" className="text-white" onClick={handleLogout}>
             Log out
           </Button>

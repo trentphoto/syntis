@@ -13,6 +13,7 @@ import { useClientManager, type Client } from "@/hooks/useClientManager"
 import AdminNavClient from "@/components/AdminNavClient"
 import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 import { AddSupplierToClientDialog } from "@/components/AddSupplierToClientDialog"
+import { AdminClientDetailSkeleton } from "@/components/AdminClientDetailSkeleton"
 
 export default function ClientDetailPage() {
   const params = useParams()
@@ -128,11 +129,7 @@ export default function ClientDetailPage() {
     return (
       <div className="min-h-screen bg-background">
         <AdminNavClient />
-        <div className="p-6">
-          <div className="flex items-center justify-center h-64">
-            <p className="text-muted-foreground">Loading client details...</p>
-          </div>
-        </div>
+        <AdminClientDetailSkeleton />
       </div>
     )
   }
