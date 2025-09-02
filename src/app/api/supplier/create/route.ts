@@ -1,75 +1,103 @@
-import { NextResponse } from "next/server"
-import { createClient as createServerClient } from "@/lib/supabase/server"
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
-export async function POST(req: Request) {
+export async function POST(request: NextRequest) {
+  console.log("🚀 [supplier/create] Starting supplier creation process...");
+  
   try {
-    const supabase = await createServerClient()
-    const body = await req.json()
+    const supabase = createClient();
     
-    const {
+    // Get the request body
+    const body = await request.json();
+    const { 
+      companyName, 
+      contactEmail, 
+      contactPhone, 
+      address, 
+      businessType, 
+      ein, 
+      domain,
+      password 
+    } = body;
+
+    console.log("📝 [supplier/create] Request data:", {
       companyName,
       contactEmail,
-      contactPhone,
-      address,
+      contactPhone: contactPhone ? "***" : null,
+      address: address ? "***" : null,
       businessType,
-      ein,
+      ein: ein ? "***" : null,
       domain,
-      password
-    } = body
+      hasPassword: !!password
+    });
 
     // Validate required fields
     if (!companyName || !contactEmail || !password) {
-      return NextResponse.json({ 
-        error: "Company name, contact email, and password are required" 
-      }, { status: 400 })
+      console.error("❌ [supplier/create] Missing required fields");
+      return NextResponse.json(
+        { error: "Company name, contact email, and password are required" },
+        { status: 400 }
+      );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(contactEmail)) {
-      return NextResponse.json({ 
-        error: "Invalid email format" 
-      }, { status: 400 })
+    // Check if user already exists
+    console.log("🔍 [supplier/create] Checking if user already exists...");
+    const { data: existingUser, error: userCheckError } = await supabase.auth.admin.getUserByEmail(contactEmail);
+    
+    if (userCheckError) {
+      console.error("❌ [supplier/create] Error checking existing user:", userCheckError);
+      return NextResponse.json(
+        { error: "Failed to check existing user" },
+        { status: 500 }
+      );
     }
 
-    // Validate password strength
-    if (password.length < 8) {
-      return NextResponse.json({ 
-        error: "Password must be at least 8 characters long" 
-      }, { status: 400 })
+    if (existingUser) {
+      console.error("❌ [supplier/create] User already exists with email:", contactEmail);
+      return NextResponse.json(
+        { error: "A user with this email already exists" },
+        { status: 409 }
+      );
     }
 
-    // Check if email already exists - we'll handle this during signup
-    // The auth.signUp will return an error if the email already exists
-
-    // Create user account
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Create the user account
+    console.log("👤 [supplier/create] Creating user account...");
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: contactEmail,
-      password,
-      options: {
-        data: { 
-          company_name: companyName,
-          full_name: companyName
-        },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/supplier/dashboard`,
-      },
-    })
+      password: password,
+      email_confirm: true,
+      user_metadata: {
+        role: "supplier",
+        company_name: companyName,
+        full_name: companyName
+      }
+    });
 
     if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 500 })
+      console.error("❌ [supplier/create] User creation failed:", authError);
+      return NextResponse.json(
+        { error: "Failed to create user account" },
+        { status: 500 }
+      );
     }
 
-    const userId = authData.user?.id
-    if (!userId) {
-      return NextResponse.json({ 
-        error: "Failed to create user account" 
-      }, { status: 500 })
+    if (!authData.user) {
+      console.error("❌ [supplier/create] No user data returned from auth creation");
+      return NextResponse.json(
+        { error: "User creation failed - no user data returned" },
+        { status: 500 }
+      );
     }
 
-    // Create supplier profile
-    const { error: supplierError } = await supabase
+    const userId = authData.user.id;
+    console.log("✅ [supplier/create] User created successfully with ID:", userId);
+
+    // Create supplier profile linked to the user account
+    console.log("🏢 [supplier/create] Creating supplier profile...");
+    const { data: supplierData, error: supplierError } = await supabase
       .from("suppliers")
       .insert({
+        id: userId, // CRITICAL: Link supplier ID to auth user ID
         company_name: companyName,
         contact_email: contactEmail,
         contact_phone: contactPhone || null,
@@ -78,42 +106,89 @@ export async function POST(req: Request) {
         ein: ein || null,
         domain: domain || null,
         status: "pending",
+        overall_risk_level: "medium"
       })
+      .select()
+      .single();
 
     if (supplierError) {
-      console.error("Error creating supplier profile:", supplierError)
-      // Note: We don't fail here because the user was created successfully
-      // The supplier profile can be created manually later if needed
+      console.error("❌ [supplier/create] Supplier profile creation failed:", supplierError);
+      
+      // Try to clean up the created user if supplier creation fails
+      console.log("🧹 [supplier/create] Cleaning up failed user account...");
+      const { error: cleanupError } = await supabase.auth.admin.deleteUser(userId);
+      if (cleanupError) {
+        console.error("⚠️ [supplier/create] Failed to cleanup user account:", cleanupError);
+      }
+      
+      return NextResponse.json(
+        { error: "Failed to create supplier profile" },
+        { status: 500 }
+      );
     }
 
-    // Assign supplier role
+    console.log("✅ [supplier/create] Supplier profile created successfully:", {
+      supplierId: supplierData.id,
+      companyName: supplierData.company_name,
+      contactEmail: supplierData.contact_email
+    });
+
+    // Assign supplier role to the user
+    console.log("🎭 [supplier/create] Assigning supplier role...");
     const { error: roleError } = await supabase
       .from("user_roles")
       .insert({
         user_id: userId,
         role: "supplier",
-        is_active: true,
-        assigned_at: new Date().toISOString(),
-      })
+        is_active: true
+      });
 
     if (roleError) {
-      console.error("Error assigning supplier role:", roleError)
-      // Note: We don't fail here because the user was created successfully
-      // The role can be assigned manually later if needed
+      console.error("❌ [supplier/create] Role assignment failed:", roleError);
+      // Don't fail the entire request for role assignment failure
+      // The user can still access the system and role can be assigned manually
+      console.log("⚠️ [supplier/create] Continuing despite role assignment failure");
+    } else {
+      console.log("✅ [supplier/create] Supplier role assigned successfully");
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      user_id: userId,
-      supplier_profile_created: !supplierError,
-      role_assigned: !roleError,
-      message: "Supplier account created successfully"
-    })
+    // Verify the complete setup
+    console.log("🔍 [supplier/create] Verifying complete setup...");
+    const { data: verificationData, error: verificationError } = await supabase
+      .from("suppliers")
+      .select("*")
+      .eq("id", userId)
+      .single();
 
-  } catch (err: unknown) {
-    console.error("Supplier creation error:", err)
-    return NextResponse.json({ 
-      error: (err as Error)?.message ?? "An unexpected error occurred" 
-    }, { status: 500 })
+    if (verificationError || !verificationData) {
+      console.error("❌ [supplier/create] Verification failed - supplier record not found:", verificationError);
+      return NextResponse.json(
+        { error: "Supplier creation verification failed" },
+        { status: 500 }
+      );
+    }
+
+    console.log("✅ [supplier/create] Complete setup verified successfully");
+
+    return NextResponse.json({
+      message: "Supplier account created successfully",
+      user: {
+        id: userId,
+        email: contactEmail,
+        role: "supplier"
+      },
+      supplier: {
+        id: supplierData.id,
+        company_name: supplierData.company_name,
+        status: supplierData.status
+      }
+    });
+
+  } catch (error) {
+    console.error("💥 [supplier/create] Unexpected error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
