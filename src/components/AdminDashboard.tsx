@@ -224,34 +224,28 @@ export default async function AdminDashboard() {
           </Card>
         </div>
 
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="w-full grid grid-cols-1 md:grid-cols-1 gap-4">
 
           <Card>
             <CardHeader>
-              <CardTitle>Your user details</CardTitle>
-              <CardDescription className="text-sm">Role and JWT claims</CardDescription>
+              <CardTitle>Quick Stats</CardTitle>
+              <CardDescription>Platform overview</CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="text-sm mb-4">
-                  <div className="font-medium">Role</div>
-                  <div className="text-xs text-foreground/80">{userRole?.role ?? 'No role assigned'}</div>
-                  {userRole?.assigned_at ? (
-                    <div className="text-foreground/60 text-xs">Assigned: {new Date(userRole.assigned_at).toLocaleString()}</div>
-                  ) : null}
+              <div className="text-sm space-y-2">
+                <div className="flex justify-between">
+                  <span>Total Clients:</span>
+                  <span className="font-medium">{totalClientsCount}</span>
                 </div>
-
-                <pre className="text-xs font-mono p-3 rounded border border-gray-700 bg-gray-200">
-                  {JSON.stringify(data.claims, null, 2)}
-                </pre>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              Header
-            </CardHeader>
-            <CardContent>
-              Content
+                <div className="flex justify-between">
+                  <span>Active Clients:</span>
+                  <span className="font-medium">{activeClientsCount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Suppliers:</span>
+                  <span className="font-medium">{totalSuppliersEnrolled}</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

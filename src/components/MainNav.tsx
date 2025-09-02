@@ -1,5 +1,4 @@
 import { hasEnvVars } from "@/lib/utils";
-import { AuthButton } from "@/components/auth-button";
 import { EnvVarWarning } from "@/components/env-var-warning";
 
 interface MainNavProps {
@@ -13,7 +12,7 @@ export default function MainNav({ header = "" }: MainNavProps) {
                 <div className="flex gap-5 items-center font-semibold">
                     <h1>{header}</h1>
                 </div>
-                {!hasEnvVars ? <EnvVarWarning /> : <AuthButton />}
+                {!hasEnvVars && <EnvVarWarning />}
             </div>
         </nav>
     )
