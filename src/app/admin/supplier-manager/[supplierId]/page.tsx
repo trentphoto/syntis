@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CalendarIcon, MailIcon, PhoneIcon, MapPinIcon, BuildingIcon, EditIcon, TrashIcon, ExternalLinkIcon, ShieldIcon, CreditCardIcon, PackageIcon, HomeIcon, SettingsIcon, MoreHorizontalIcon } from "lucide-react"
 import { useSupplierManager, type Supplier } from "@/hooks/useSupplierManager"
+import { useSecurityData } from "@/hooks/useSecurityData"
 import AdminNavClient from "@/components/AdminNavClient"
 import { Breadcrumbs } from "@/components/ui/breadcrumbs"
 
@@ -40,6 +41,9 @@ export default function SupplierDetailPage() {
   })
 
   const { fetchSupplier, saveEdit, deleteSupplier, loading: actionLoading } = useSupplierManager()
+  const { securityData, loading: securityLoading, error: securityError, refreshData: refreshSecurityData } = useSecurityData(supplier?.domain || null)
+  const [showAllIPs, setShowAllIPs] = useState(false)
+  const [showAllPorts, setShowAllPorts] = useState(false)
 
   const loadSupplier = useCallback(async () => {
     setLoading(true)
@@ -208,10 +212,14 @@ export default function SupplierDetailPage() {
         </header>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview" className="flex items-center gap-2">
               <BuildingIcon className="h-4 w-4" />
               Overview
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-2">
+              <ShieldIcon className="h-4 w-4" />
+              Security
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <SettingsIcon className="h-4 w-4" />
@@ -482,6 +490,659 @@ export default function SupplierDetailPage() {
                       </div>
                     )}
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Security Tab */}
+          <TabsContent value="security" className="space-y-6">
+            {/* Security Scorecard */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <ShieldIcon className="h-5 w-5" />
+                      Security Scorecard
+                    </CardTitle>
+                    <CardDescription>Overall security posture and risk assessment</CardDescription>
+                  </div>
+                  {supplier?.domain && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={refreshSecurityData}
+                      disabled={securityLoading}
+                    >
+                      {securityLoading ? "Refreshing..." : "Refresh Data"}
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {securityLoading ? (
+                  <div className="flex items-center justify-center h-32">
+                    <p className="text-muted-foreground">Loading security data...</p>
+                  </div>
+                ) : securityError ? (
+                  <div className="text-center p-6">
+                    <p className="text-destructive mb-2">{securityError}</p>
+                    {supplier?.domain && (
+                      <Button variant="outline" onClick={refreshSecurityData}>
+                        Try Again
+                      </Button>
+                    )}
+                  </div>
+                ) : securityData ? (
+                  <div className="grid gap-6 md:grid-cols-3">
+                    {/* Overall Security Grade */}
+                    <div className="text-center">
+                      <div className={`text-6xl font-bold mb-2 ${
+                        securityData.grade === 'A' ? 'text-green-600' :
+                        securityData.grade === 'B' ? 'text-blue-600' :
+                        securityData.grade === 'C' ? 'text-yellow-600' :
+                        securityData.grade === 'D' ? 'text-orange-600' :
+                        securityData.grade === 'F' ? 'text-red-600' : 'text-gray-600'
+                      }`}>
+                        {securityData.grade}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Security Grade</p>
+                      <Badge variant="default" className={`mt-2 ${
+                        securityData.grade === 'A' ? 'bg-green-100 text-green-800' :
+                        securityData.grade === 'B' ? 'bg-blue-100 text-blue-800' :
+                        securityData.grade === 'C' ? 'bg-yellow-100 text-yellow-800' :
+                        securityData.grade === 'D' ? 'bg-orange-100 text-orange-800' :
+                        securityData.grade === 'F' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {securityData.grade === 'A' ? 'Excellent' :
+                         securityData.grade === 'B' ? 'Good' :
+                         securityData.grade === 'C' ? 'Fair' :
+                         securityData.grade === 'D' ? 'Poor' :
+                         securityData.grade === 'F' ? 'Critical' : 'Unknown'}
+                      </Badge>
+                    </div>
+                    
+                    {/* Security Score */}
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-blue-600 mb-2">
+                        {Math.round(securityData.grade === 'A' ? 90 : 
+                                    securityData.grade === 'B' ? 75 : 
+                                    securityData.grade === 'C' ? 60 : 
+                                    securityData.grade === 'D' ? 40 : 
+                                    securityData.grade === 'F' ? 20 : 50)}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Security Score</p>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div className="bg-blue-600 h-2 rounded-full" style={{ 
+                          width: `${securityData.grade === 'A' ? 90 : 
+                                    securityData.grade === 'B' ? 75 : 
+                                    securityData.grade === 'C' ? 60 : 
+                                    securityData.grade === 'D' ? 40 : 
+                                    securityData.grade === 'F' ? 20 : 50}%` 
+                        }}></div>
+                      </div>
+                    </div>
+                    
+                    {/* Risk Level */}
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-yellow-600 mb-2">
+                        {securityData.vulnerabilities.length > 0 ? 
+                          (securityData.vulnerabilities.some(v => v.severity === 'critical') ? 'Critical' :
+                           securityData.vulnerabilities.some(v => v.severity === 'high') ? 'High' :
+                           securityData.vulnerabilities.some(v => v.severity === 'medium') ? 'Medium' : 'Low') : 'Low'}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Risk Level</p>
+                      <Badge variant="secondary" className={`mt-2 ${
+                        securityData.vulnerabilities.some(v => v.severity === 'critical') ? 'bg-red-100 text-red-800' :
+                        securityData.vulnerabilities.some(v => v.severity === 'high') ? 'bg-orange-100 text-orange-800' :
+                        securityData.vulnerabilities.some(v => v.severity === 'medium') ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                      }`}>
+                        {securityData.vulnerabilities.some(v => v.severity === 'critical') ? 'Critical Risk' :
+                         securityData.vulnerabilities.some(v => v.severity === 'high') ? 'High Risk' :
+                         securityData.vulnerabilities.some(v => v.severity === 'medium') ? 'Medium Risk' : 'Low Risk'}
+                      </Badge>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center p-6">
+                    <p className="text-muted-foreground">No security data available</p>
+                    {supplier?.domain && (
+                      <Button variant="outline" onClick={refreshSecurityData}>
+                        Scan Domain
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* TLS Configuration */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShieldIcon className="h-5 w-5" />
+                    TLS Configuration
+                  </CardTitle>
+                  <CardDescription>Transport Layer Security details</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {securityData ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">TLS Version:</span>
+                          <p className="font-medium">{securityData.tls.tls_version}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Cipher:</span>
+                          <p className="font-medium">{securityData.tls.cipher}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">HTTPS:</span>
+                          <Badge variant="default" className={securityData.tls.https ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                            {securityData.tls.https ? "Enabled" : "Disabled"}
+                          </Badge>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Certificate:</span>
+                          <p className="font-medium">{securityData.tls.days_left > 0 ? "Valid" : "Expired"}</p>
+                        </div>
+                      </div>
+                      <div className="pt-2">
+                        <span className="text-muted-foreground text-sm">Days until expiry:</span>
+                        <p className={`font-medium ${securityData.tls.days_left < 30 ? 'text-red-600' : securityData.tls.days_left < 90 ? 'text-yellow-600' : 'text-green-600'}`}>
+                          {securityData.tls.days_left} days
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center p-4">
+                      <p className="text-muted-foreground">No TLS data available</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Infrastructure Security */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BuildingIcon className="h-5 w-5" />
+                    Infrastructure Security
+                  </CardTitle>
+                  <CardDescription>Network and server security details</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {securityData ? (
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Open Ports:</span>
+                        <p className="font-medium">{securityData.ports.length} ports</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">WAF Detected:</span>
+                        <Badge variant="outline" className={securityData.firewall.length > 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                          {securityData.firewall.length > 0 ? "Yes" : "No"}
+                        </Badge>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Subdomains:</span>
+                        <p className="font-medium">{securityData.subdomains.length} secured</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Blacklist Status:</span>
+                        <Badge variant="default" className={securityData.blacklist.failed.length === 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                          {securityData.blacklist.failed.length === 0 ? "Clean" : "Blacklisted"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center p-4">
+                      <p className="text-muted-foreground">No infrastructure data available</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Vulnerabilities */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShieldIcon className="h-5 w-5" />
+                    Vulnerabilities
+                  </CardTitle>
+                  <CardDescription>Identified security issues</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {securityData ? (
+                    securityData.vulnerabilities.length > 0 ? (
+                      <div className="space-y-3">
+                        {securityData.vulnerabilities.map((vuln, index) => (
+                          <div key={index} className={`flex items-center justify-between p-3 rounded-lg border ${
+                            vuln.severity === 'critical' ? 'bg-red-50 border-red-200' :
+                            vuln.severity === 'high' ? 'bg-orange-50 border-orange-200' :
+                            vuln.severity === 'medium' ? 'bg-yellow-50 border-yellow-200' :
+                            'bg-blue-50 border-blue-200'
+                          }`}>
+                            <div className="flex items-center gap-3">
+                              <div className={`w-3 h-3 rounded-full ${
+                                vuln.severity === 'critical' ? 'bg-red-500' :
+                                vuln.severity === 'high' ? 'bg-orange-500' :
+                                vuln.severity === 'medium' ? 'bg-yellow-500' :
+                                'bg-blue-500'
+                              }`}></div>
+                              <div>
+                                <p className="font-medium text-sm">{vuln.name.en}</p>
+                                <p className="text-xs text-muted-foreground">{vuln.description.en}</p>
+                              </div>
+                            </div>
+                            <Badge variant="secondary" className={`${
+                              vuln.severity === 'critical' ? 'bg-red-100 text-red-800' :
+                              vuln.severity === 'high' ? 'bg-orange-100 text-orange-800' :
+                              vuln.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-blue-100 text-blue-800'
+                            }`}>
+                              {vuln.severity.charAt(0).toUpperCase() + vuln.severity.slice(1)}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center p-4">
+                        <p className="text-green-600 font-medium">No vulnerabilities detected</p>
+                        <p className="text-sm text-muted-foreground">This domain appears to be secure</p>
+                      </div>
+                    )
+                  ) : (
+                    <div className="text-center p-4">
+                      <p className="text-muted-foreground">No vulnerability data available</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Security Recommendations */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShieldIcon className="h-5 w-5" />
+                    Security Recommendations
+                  </CardTitle>
+                  <CardDescription>Actionable security improvements</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {securityData ? (
+                    securityData.recommendations.en.length > 0 ? (
+                      <div className="space-y-3">
+                        {securityData.recommendations.en.map((rec, index) => (
+                          <div key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
+                            <p className="text-sm">{rec}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center p-4">
+                        <p className="text-green-600 font-medium">No recommendations</p>
+                        <p className="text-sm text-muted-foreground">Security posture is optimal</p>
+                      </div>
+                    )
+                  ) : (
+                    <div className="text-center p-4">
+                      <p className="text-muted-foreground">No recommendation data available</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Additional Security Information */}
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Data Breach Monitor */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShieldIcon className="h-5 w-5" />
+                    Data Breach Monitor
+                  </CardTitle>
+                  <CardDescription>Account and email leak detection</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {securityData ? (
+                    <>
+                      {/* Account Leaks */}
+                      <div className="mb-4">
+                        <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${securityData.account_leaks.length > 0 ? 'bg-red-500' : 'bg-green-500'}`}></span>
+                          Account Leaks ({securityData.account_leaks.length})
+                        </h4>
+                        {securityData.account_leaks.length > 0 ? (
+                          <div className="space-y-2">
+                            {securityData.account_leaks.map((leak, index) => (
+                              <div key={index} className="p-2 bg-red-50 rounded border border-red-200">
+                                <p className="text-sm font-medium text-red-800">{leak.username}</p>
+                                <p className="text-xs text-red-600">Hash: {leak.hash.substring(0, 8)}...</p>
+                                <p className="text-xs text-red-600">
+                                  Found: {new Date(leak.found_at * 1000).toLocaleDateString()}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-green-600">No account leaks detected</p>
+                        )}
+                      </div>
+
+                      {/* Email Leaks */}
+                      <div>
+                        <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${securityData.email_leaks.length > 0 ? 'bg-orange-500' : 'bg-green-500'}`}></span>
+                          Email Leaks ({securityData.email_leaks.length})
+                        </h4>
+                        {securityData.email_leaks.length > 0 ? (
+                          <div className="space-y-2">
+                            {securityData.email_leaks.map((leak, index) => (
+                              <div key={index} className="p-2 bg-orange-50 rounded border border-orange-200">
+                                <p className="text-sm font-medium text-orange-800">{leak.email}</p>
+                                {leak.department && (
+                                  <p className="text-xs text-orange-600">Dept: {leak.department}</p>
+                                )}
+                                <p className="text-xs text-orange-600">
+                                  Found: {new Date(leak.found_at * 1000).toLocaleDateString()}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-green-600">No email leaks detected</p>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center p-4">
+                      <p className="text-muted-foreground">No breach data available</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Infrastructure Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BuildingIcon className="h-5 w-5" />
+                    Infrastructure Details
+                  </CardTitle>
+                  <CardDescription>Operating system and network information</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {securityData ? (
+                    <div className="space-y-4">
+                      {/* Security Significance Explanation */}
+                      <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-sm text-blue-800">
+                          Infrastructure analysis reveals potential attack vectors, system vulnerabilities, and network architecture risks. 
+                          Multiple IP addresses typically indicate load balancing or CDN implementation, while detected applications 
+                          expose running services that may present security risks.
+                        </p>
+                      </div>
+
+                      {/* Operating System */}
+                      {securityData.os && (
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2">Operating System</h4>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">OS:</span>
+                              <p className="font-medium">{securityData.os.name} {securityData.os.version}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Vendor:</span>
+                              <p className="font-medium">{securityData.os.vendor || 'Unknown'}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Family:</span>
+                              <p className="font-medium">{securityData.os.family}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Host:</span>
+                              <p className="font-medium font-mono text-xs">{securityData.os.host}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Network IPs */}
+                      <div>
+                        <h4 className="font-semibold text-sm mb-2">Network Infrastructure</h4>
+                        <div className="space-y-2">
+                          {securityData.ips.slice(0, 3).map((ip, index) => (
+                            <div key={index} className="p-2 bg-gray-50 rounded border">
+                              <div className="flex items-center justify-between">
+                                <span className="font-mono text-xs">{ip.ip}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {ip.type}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-muted-foreground">{ip.as_name}</p>
+                              <p className="text-xs text-muted-foreground">{ip.city}, {ip.country}</p>
+                            </div>
+                          ))}
+                          {securityData.ips.length > 3 && (
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full text-xs"
+                              onClick={() => setShowAllIPs(!showAllIPs)}
+                            >
+                              {showAllIPs ? 'Show Less' : `+${securityData.ips.length - 3} more IPs`}
+                            </Button>
+                          )}
+                          
+                          {showAllIPs && securityData.ips.length > 3 && (
+                            <div className="space-y-2 mt-2">
+                              {securityData.ips.slice(3).map((ip, index) => (
+                                <div key={index + 3} className="p-2 bg-gray-50 rounded border">
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-mono text-xs">{ip.ip}</span>
+                                    <Badge variant="outline" className="text-xs">
+                                      {ip.type}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">{ip.as_name}</p>
+                                  <p className="text-xs text-muted-foreground">{ip.city}, {ip.country}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Applications */}
+                      {securityData.applications.length > 0 && (
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2">Detected Applications</h4>
+                          <div className="space-y-2">
+                            {securityData.applications.map((app, index) => (
+                              <div key={index} className="p-2 bg-blue-50 rounded border border-blue-200">
+                                <p className="text-sm font-medium">{app.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {app.host}:{app.port}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center p-4">
+                      <p className="text-muted-foreground">No infrastructure data available</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Security Analysis */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShieldIcon className="h-5 w-5" />
+                    Security Analysis
+                  </CardTitle>
+                  <CardDescription>Detailed security assessment and company information</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {securityData ? (
+                    <div className="space-y-4">
+                      {/* Score Reasons */}
+                      <div>
+                        <h4 className="font-semibold text-sm mb-2">Score Justification</h4>
+                        <div className="space-y-2">
+                          {securityData.score_reason.en.slice(0, 4).map((reason, index) => (
+                            <div key={index} className="flex items-start gap-2">
+                              <span className={`w-2 h-2 rounded-full mt-2 ${
+                                reason.toLowerCase().includes('no') || reason.toLowerCase().includes('secure') || reason.toLowerCase().includes('strong') 
+                                  ? 'bg-green-500' : 'bg-yellow-500'
+                              }`}></span>
+                              <p className="text-sm">{reason}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Company Information */}
+                      <div>
+                        <h4 className="font-semibold text-sm mb-2">Company Information</h4>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Category:</span>
+                            <p className="font-medium">{securityData.info.category.split('/').pop()?.replace(/_/g, ' ')}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Global Rank:</span>
+                            <p className="font-medium">#{securityData.info.global_rank.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Country Rank:</span>
+                            <p className="font-medium">#{securityData.info.country_rank.rank.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Country:</span>
+                            <p className="font-medium">{securityData.info.country_rank.country_code}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Summary */}
+                      <div>
+                        <h4 className="font-semibold text-sm mb-2">Security Summary</h4>
+                        <p className="text-sm text-muted-foreground">{securityData.summary.en}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center p-4">
+                      <p className="text-muted-foreground">No analysis data available</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Network Ports Detail */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BuildingIcon className="h-5 w-5" />
+                    Network Ports
+                  </CardTitle>
+                  <CardDescription>Open ports and network services</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {securityData ? (
+                    <div className="space-y-4">
+                      {/* Security Significance Explanation */}
+                      <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                        <p className="text-sm text-orange-800">
+                          Open ports represent potential attack vectors, with each exposed service creating vulnerability opportunities. 
+                          Elevated port counts expand the attack surface, while legacy protocols such as FTP (21) and Telnet (23) 
+                          introduce inherent security risks.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Total Open Ports: {securityData.ports.length}</span>
+                        <Badge variant={securityData.ports.length > 20 ? "destructive" : securityData.ports.length > 10 ? "secondary" : "default"}>
+                          {securityData.ports.length > 20 ? "High" : securityData.ports.length > 10 ? "Medium" : "Low"} Risk
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-4 gap-2">
+                        {securityData.ports.slice(0, 16).map((port, index) => (
+                          <div key={index} className="p-2 bg-gray-50 rounded text-center">
+                            <span className="text-sm font-mono">{port}</span>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {securityData.ports.length > 16 && (
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="w-full text-xs"
+                          onClick={() => setShowAllPorts(!showAllPorts)}
+                        >
+                          {showAllPorts ? 'Show Less' : `+${securityData.ports.length - 16} more ports`}
+                        </Button>
+                      )}
+
+                      {showAllPorts && securityData.ports.length > 16 && (
+                        <div className="grid grid-cols-4 gap-2 mt-2">
+                          {securityData.ports.slice(16).map((port, index) => (
+                            <div key={index + 16} className="p-2 bg-gray-50 rounded text-center">
+                              <span className="text-sm font-mono">{port}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Common Port Analysis */}
+                      <div className="pt-2 border-t">
+                        <h4 className="font-semibold text-sm mb-2">Common Services</h4>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          {securityData.ports.includes(80) && (
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                              <span>HTTP (80)</span>
+                            </div>
+                          )}
+                          {securityData.ports.includes(443) && (
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              <span>HTTPS (443)</span>
+                            </div>
+                          )}
+                          {securityData.ports.includes(22) && (
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                              <span>SSH (22)</span>
+                            </div>
+                          )}
+                          {securityData.ports.includes(21) && (
+                            <div className="flex items-center gap-2">
+                              <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                              <span>FTP (21)</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center p-4">
+                      <p className="text-muted-foreground">No port data available</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
