@@ -4,6 +4,7 @@ import ClientDashboard from "@/components/ClientDashboard";
 import { createClient } from "@/lib/supabase/server";
 import SupplierDashboard from "@/components/SupplierDashboard";
 import { redirect } from "next/navigation";
+import RoleBanner from "@/components/RoleBanner";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -13,6 +14,10 @@ export default async function Home() {
     // If no user claims, redirect to login
     redirect("/auth/login");
   }
+
+  // Extract user email from claims
+  const userEmail = data.claims.email || null;
+  const isAuthenticated = !!data.claims;
 
   const roleRow = await getUserRoleFromSession();
   const role = roleRow?.role ?? null;
@@ -42,9 +47,19 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center">
+
+      {/* Role Banner */}
+      <RoleBanner 
+        role={role} 
+        userEmail={userEmail}
+        isAuthenticated={isAuthenticated}
+      />
+
+      {/* Dashboard */}
       <div className="flex-1 flex flex-col gap-20 p-8 w-full container mx-auto">
         {renderDashboard()}
       </div>
+      
     </main>
   );
 }
