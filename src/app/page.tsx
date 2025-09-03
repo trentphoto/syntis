@@ -4,7 +4,7 @@ import ClientDashboard from "@/components/ClientDashboard";
 import { createClient } from "@/lib/supabase/server";
 import SupplierDashboard from "@/components/SupplierDashboard";
 import { redirect } from "next/navigation";
-import RoleBanner from "@/components/RoleBanner";
+import TopToolbar from "@/components/TopToolbar";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -48,8 +48,8 @@ export default async function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center">
 
-      {/* Role Banner */}
-      <RoleBanner 
+      {/* Top Toolbar */}
+      <TopToolbar 
         role={role} 
         userEmail={userEmail}
         isAuthenticated={isAuthenticated}

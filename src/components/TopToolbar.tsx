@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, LogOut, ChevronDown } from "lucide-react";
+import { User, LogOut, ChevronDown, Bell, MessageSquare } from "lucide-react";
 import { Button } from "./ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import Link from "next/link";
@@ -14,9 +14,11 @@ type Props = {
   isAuthenticated?: boolean;
 };
 
-export default function RoleBanner({ role, userEmail: propUserEmail, isAuthenticated: propIsAuthenticated }: Props) {
+export default function TopToolbar({ role, userEmail: propUserEmail, isAuthenticated: propIsAuthenticated }: Props) {
   const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState<boolean>(false);
+  const [isMessagesOpen, setIsMessagesOpen] = useState<boolean>(false);
   const router = useRouter();
   
   // Use props or fallback to empty values
@@ -128,50 +130,94 @@ export default function RoleBanner({ role, userEmail: propUserEmail, isAuthentic
           {/* Show different content based on auth state */}
           {isAuthenticated && userEmail ? (
             // User Profile Dropdown - when authenticated
-            <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-2 px-2 py-1 h-8 hover:bg-white/10 text-white"
-                >
-                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                    <User className="w-3 h-3 text-white" />
+            <>
+              {/* Notifications Icon */}
+              <DropdownMenu open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-2 px-2 py-1 h-8 hover:bg-white/10 text-white"
+                  >
+                    <Bell className="w-4 h-4 text-white" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <div className="px-3 py-2 border-b border-border mb-2">
+                    <p className="text-sm font-medium text-foreground">Notifications</p>
                   </div>
-                  <span className="text-xs font-medium text-white">
-                    {userEmail}
-                  </span>
-                  <ChevronDown className="w-3 h-3 text-white/70" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-3 py-2 border-b border-border mb-2">
-                  <p className="text-sm font-medium text-foreground">Signed in as</p>
-                  <p className="text-sm text-muted-foreground truncate">{userEmail}</p>
-                </div>
-                <DropdownMenuItem
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleLogout();
-                  }}
-                  disabled={isLoggingOut}
-                  className="flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoggingOut ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                      <span>Logging out...</span>
-                    </>
-                  ) : (
-                    <>
-                      <LogOut className="w-4 h-4" />
-                      <span>Log out</span>
-                    </>
-                  )}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <div className="px-3 py-4 text-center">
+                    <p className="text-sm text-muted-foreground">Feature coming soon</p>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Messages Icon */}
+              <DropdownMenu open={isMessagesOpen} onOpenChange={setIsMessagesOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-2 px-2 py-1 h-8 hover:bg-white/10 text-white"
+                  >
+                    <MessageSquare className="w-4 h-4 text-white" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  <div className="px-3 py-2 border-b border-border mb-2">
+                    <p className="text-sm font-medium text-foreground">Messages</p>
+                  </div>
+                  <div className="px-3 py-4 text-center">
+                    <p className="text-sm text-muted-foreground">Feature coming soon</p>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-2 px-2 py-1 h-8 hover:bg-white/10 text-white"
+                  >
+                    <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                      <User className="w-3 h-3 text-white" />
+                    </div>
+                    <span className="text-xs font-medium text-white">
+                      {userEmail}
+                    </span>
+                    <ChevronDown className="w-3 h-3 text-white/70" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-3 py-2 border-b border-border mb-2">
+                    <p className="text-sm font-medium text-foreground">Signed in as</p>
+                    <p className="text-sm text-muted-foreground truncate">{userEmail}</p>
+                  </div>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleLogout();
+                    }}
+                    disabled={isLoggingOut}
+                    className="flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoggingOut ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        <span>Logging out...</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogOut className="w-4 h-4" />
+                        <span>Log out</span>
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
             // Not logged in message
             <div className="text-white/70 text-xs">
