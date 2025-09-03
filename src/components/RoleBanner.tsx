@@ -23,23 +23,34 @@ export default function RoleBanner({ role }: Props) {
     
     // Get initial user state
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      console.log('=== GETTING INITIAL USER ===');
+      const { data: { user }, error } = await supabase.auth.getUser();
+      console.log('Initial user data:', user);
+      if (error) console.log('Get user error:', error);
       if (user?.email) {
+        console.log('Setting initial user email:', user.email);
         setUserEmail(user.email);
         setIsAuthenticated(true);
       } else {
+        console.log('No user found, clearing state');
         setUserEmail("");
         setIsAuthenticated(false);
       }
+      console.log('=== END GETTING INITIAL USER ===');
     };
 
     // Get initial session state
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('=== GETTING INITIAL SESSION ===');
+      const { data: { session }, error } = await supabase.auth.getSession();
+      console.log('Initial session data:', session);
+      if (error) console.log('Get session error:', error);
       if (session?.user?.email) {
+        console.log('Setting initial session user email:', session.user.email);
         setUserEmail(session.user.email);
         setIsAuthenticated(true);
       }
+      console.log('=== END GETTING INITIAL SESSION ===');
     };
 
     // Get user role if not provided
@@ -69,15 +80,24 @@ export default function RoleBanner({ role }: Props) {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change:', event, session?.user?.email);
+        console.log('=== AUTH STATE CHANGE ===');
+        console.log('Event:', event);
+        console.log('Session user:', session?.user);
+        console.log('Session user email:', session?.user?.email);
+        console.log('Previous state - userEmail:', userEmail, 'isAuthenticated:', isAuthenticated, 'currentRole:', currentRole);
+        
         if (event === 'SIGNED_OUT' || !session?.user) {
+          console.log('Processing SIGNED_OUT event - clearing state');
           setUserEmail("");
           setIsAuthenticated(false);
           setCurrentRole(null);
+          console.log('State cleared - userEmail: "", isAuthenticated: false, currentRole: null');
         } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          console.log('Processing SIGNED_IN/TOKEN_REFRESHED event');
           if (session?.user?.email) {
             setUserEmail(session.user.email);
             setIsAuthenticated(true);
+            console.log('Updated state - userEmail:', session.user.email, 'isAuthenticated: true');
             // Fetch role after sign in
             if (session.user.id) {
               const { data: roleData } = await supabase
@@ -89,13 +109,17 @@ export default function RoleBanner({ role }: Props) {
               
               if (roleData?.role) {
                 setCurrentRole(roleData.role);
+                console.log('Updated role:', roleData.role);
               }
             }
           }
         } else if (session?.user?.email) {
+          console.log('Processing other event with user - updating state');
           setUserEmail(session.user.email);
           setIsAuthenticated(true);
+          console.log('Updated state - userEmail:', session.user.email, 'isAuthenticated: true');
         }
+        console.log('=== END AUTH STATE CHANGE ===');
       }
     );
 
@@ -104,13 +128,169 @@ export default function RoleBanner({ role }: Props) {
   }, [role, currentRole]);
 
   async function handleLogout() {
+    console.log('=== LOGOUT DEBUG START ===');
+    console.log('Logout button clicked');
+    console.log('Current state - userEmail:', userEmail, 'isAuthenticated:', isAuthenticated, 'currentRole:', currentRole);
+    
+    // Check environment variables
+    console.log('Environment variables check:');
+    console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT SET');
+    console.log('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY:', process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY ? 'SET (length: ' + process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY.length + ')' : 'NOT SET');
+    
+    // Check network status
+    console.log('Network status check:');
+    console.log('navigator.onLine:', navigator.onLine);
+    console.log('navigator.connection:', (navigator as any).connection);
+    if ('connection' in navigator) {
+      const connection = (navigator as any).connection;
+      console.log('Connection effectiveType:', connection?.effectiveType);
+      console.log('Connection downlink:', connection?.downlink);
+      console.log('Connection rtt:', connection?.rtt);
+    }
+    
     try {
+      console.log('Creating Supabase client...');
       const supabase = createClient();
-      await supabase.auth.signOut();
+      console.log('Supabase client created:', supabase);
+      console.log('Auth object:', supabase.auth);
+      console.log('Auth methods available:', Object.getOwnPropertyNames(supabase.auth));
+      console.log('signOut method type:', typeof supabase.auth.signOut);
+      
+      if (!supabase.auth || typeof supabase.auth.signOut !== 'function') {
+        console.error('Supabase auth object is not properly initialized');
+        return;
+      }
+      
+      // Check current user before logout
+      console.log('Checking current user before logout...');
+      try {
+        const getUserPromise = supabase.auth.getUser();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('getUser timeout after 5s')), 5000)
+        );
+        
+        const result = await Promise.race([getUserPromise, timeoutPromise]) as any;
+        const currentUser = result?.data?.user;
+        const getUserError = result?.error;
+        console.log('Current user before logout:', currentUser);
+        if (getUserError) console.log('Get user error:', getUserError);
+      } catch (getUserErr) {
+        console.error('getUser failed or timed out:', getUserErr);
+      }
+      
+      // Check current session before logout
+      console.log('Checking current session before logout...');
+      try {
+        const getSessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('getSession timeout after 5s')), 5000)
+        );
+        
+        const result = await Promise.race([getSessionPromise, timeoutPromise]) as any;
+        const currentSession = result?.data?.session;
+        const getSessionError = result?.error;
+        console.log('Current session before logout:', currentSession);
+        if (getSessionError) console.log('Get session error:', getSessionError);
+      } catch (getSessionErr) {
+        console.error('getSession failed or timed out:', getSessionErr);
+      }
+      
+      // Test basic connectivity
+      console.log('Testing basic connectivity...');
+      try {
+        const testPromise = fetch('https://ygzybeunfemzcattblyg.supabase.co/rest/v1/', {
+          method: 'HEAD',
+          headers: {
+            'apikey': process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY!,
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY}`
+          }
+        });
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('connectivity test timeout after 5s')), 5000)
+        );
+        
+        const response = await Promise.race([testPromise, timeoutPromise]) as Response;
+        console.log('Connectivity test response status:', response.status);
+        console.log('Connectivity test response headers:', Object.fromEntries(response.headers.entries()));
+      } catch (connectivityErr) {
+        console.error('Connectivity test failed:', connectivityErr);
+      }
+      
+      console.log('Signing out...');
+      try {
+        const signOutPromise = supabase.auth.signOut();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('signOut timeout after 10s')), 10000)
+        );
+        
+        const result = await Promise.race([signOutPromise, timeoutPromise]) as any;
+        const error = result?.error;
+        
+        if (error) {
+          console.error('Supabase signOut error:', error);
+          console.error('Error details:', {
+            message: error.message,
+            status: error.status,
+            name: error.name,
+            stack: error.stack
+          });
+        } else {
+          console.log('Sign out successful');
+          
+          // Verify user is logged out
+          console.log('Verifying logout...');
+          try {
+            const { data: { user: userAfterLogout }, error: getUserAfterError } = await supabase.auth.getUser();
+            console.log('User after logout:', userAfterLogout);
+            if (getUserAfterError) console.log('Get user after logout error:', getUserAfterError);
+            
+            const { data: { session: sessionAfterLogout }, error: getSessionAfterError } = await supabase.auth.getSession();
+            console.log('Session after logout:', sessionAfterLogout);
+            if (getSessionAfterError) console.log('Get session after logout error:', getSessionAfterError);
+          } catch (verifyErr) {
+            console.error('Verification after logout failed:', verifyErr);
+          }
+        }
+      } catch (signOutErr) {
+        console.error('signOut failed or timed out:', signOutErr);
+        
+        // Fallback: Force clear local state and redirect
+        console.log('Using fallback logout approach...');
+        try {
+          // Clear local storage
+          localStorage.removeItem('supabase.auth.token');
+          sessionStorage.removeItem('supabase.auth.token');
+          
+          // Clear any cookies
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+          });
+          
+          console.log('Local state cleared, forcing redirect...');
+        } catch (fallbackErr) {
+          console.error('Fallback logout failed:', fallbackErr);
+        }
+      }
     } catch (err) {
       console.error("Logout failed", err);
+      console.error("Error details:", err);
+      console.error("Error type:", typeof err);
+      console.error("Error constructor:", err?.constructor?.name);
+      if (err instanceof Error) {
+        console.error("Error message:", err.message);
+        console.error("Error stack:", err.stack);
+      }
     } finally {
-      router.push("/auth/login");
+      console.log('Redirecting to login page...');
+      console.log('Router object:', router);
+      console.log('Router methods:', Object.getOwnPropertyNames(router));
+      try {
+        await router.push("/auth/login");
+        console.log('Router.push completed');
+      } catch (routerError) {
+        console.error('Router.push error:', routerError);
+      }
+      console.log('=== LOGOUT DEBUG END ===');
     }
   }
 

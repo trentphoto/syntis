@@ -65,15 +65,8 @@ export async function updateSession(request: NextRequest) {
   if (
     user &&
     (request.nextUrl.pathname.startsWith("/auth/login") ||
-     request.nextUrl.pathname.startsWith("/auth/sign-up"))
-  ) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
-  }
-
-  // If user is authenticated and trying to access the landing page, redirect to home
-  if (user && request.nextUrl.pathname === "/landing") {
+    request.nextUrl.pathname.startsWith("/auth/sign-up") ||
+    request.nextUrl.pathname === "/landing")) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
