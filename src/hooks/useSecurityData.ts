@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react"
-import { toast } from "sonner"
+"use client";
+
+import { useState, useEffect, useCallback } from "react"
 
 export interface SecurityData {
   address: string
@@ -15,7 +16,14 @@ export interface SecurityData {
     type: string
   }>
   ports: number[]
-  port_details: any[]
+  port_details: Array<{
+    port: number
+    service: string
+    version?: string
+    product?: string
+    extra_info?: string
+    banner?: string
+  }>
   os: {
     name: string
     vendor: string
@@ -58,7 +66,12 @@ export interface SecurityData {
     port: number
     family: string | null
   }>
-  firewall: any[]
+  firewall: Array<{
+    name: string
+    type: string
+    version?: string
+    vendor?: string
+  }>
   grade: string
   recommendations: {
     en: string[]
@@ -130,7 +143,7 @@ export function useSecurityData(domain: string | null) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchSecurityData = async () => {
+  const fetchSecurityData = useCallback(async () => {
     if (!domain) return
 
     setLoading(true)
@@ -163,12 +176,13 @@ export function useSecurityData(domain: string | null) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [domain])
 
   useEffect(() => {
     if (domain) {
       fetchSecurityData()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [domain])
 
   const refreshData = () => {

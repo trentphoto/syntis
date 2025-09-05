@@ -55,7 +55,7 @@ export default function TopToolbar({ role, userEmail: propUserEmail, isAuthentic
           setTimeout(() => reject(new Error('signOut timeout after 10s')), 10000)
         );
         
-        const result = await Promise.race([signOutPromise, timeoutPromise]) as any;
+        const result = await Promise.race([signOutPromise, timeoutPromise]) as { error?: { message: string; status?: number; name?: string; stack?: string } };
         const error = result?.error;
         
         if (error) {

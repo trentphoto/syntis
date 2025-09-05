@@ -158,7 +158,7 @@ export function AddSupplierToClientDialog({
     setError(null);
 
     try {
-      const response = await fetch("/api/admin/create-supplier", {
+      const response = await fetch("/api/supplier/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

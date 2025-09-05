@@ -22,7 +22,6 @@ import {
   MapPinIcon,
   CalendarIcon,
   EditIcon,
-  ExternalLinkIcon,
   CreditCardIcon,
   PackageIcon
 } from "lucide-react";
@@ -52,8 +51,8 @@ export default function SupplierDashboard() {
     domain: ""
   });
 
-  const [showAllIPs, setShowAllIPs] = useState(false);
-  const [showAllPorts, setShowAllPorts] = useState(false);
+  const [_showAllIPs, _setShowAllIPs] = useState(false);
+  const [_showAllPorts, _setShowAllPorts] = useState(false);
 
   // Debug logging
   useEffect(() => {

@@ -281,7 +281,7 @@ export function useSupplierManager() {
   const createNewSupplier = async (data: CreateForm) => {
     setLoading(true)
     try {
-      const res = await fetch("/api/admin/create-supplier", {
+      const res = await fetch("/api/supplier/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 

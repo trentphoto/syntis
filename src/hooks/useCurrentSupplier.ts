@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react"
+"use client";
+
+import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
 import type { Supplier } from "./useSupplierManager"
@@ -10,7 +12,7 @@ export function useCurrentSupplier() {
 
   const supabase = createClient()
 
-  const fetchCurrentSupplier = async () => {
+  const fetchCurrentSupplier = useCallback(async () => {
     console.log("🔄 [useCurrentSupplier] Starting to fetch supplier data...")
     setLoading(true)
     setError(null)
@@ -137,7 +139,7 @@ export function useCurrentSupplier() {
       setLoading(false)
       console.log("🏁 [useCurrentSupplier] Fetch operation completed")
     }
-  }
+  }, [supabase])
 
   const updateSupplier = async (updateData: Partial<Supplier>) => {
     if (!supplier) {
@@ -179,6 +181,7 @@ export function useCurrentSupplier() {
   useEffect(() => {
     console.log("🚀 [useCurrentSupplier] Hook initialized, fetching supplier data...")
     fetchCurrentSupplier()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Debug logging for state changes

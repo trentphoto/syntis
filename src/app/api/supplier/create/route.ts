@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   console.log("🚀 [supplier/create] Starting supplier creation process...");
   
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
     
     // Get the request body
     const body = await request.json();
@@ -17,7 +17,8 @@ export async function POST(request: NextRequest) {
       businessType, 
       ein, 
       domain,
-      password 
+      password,
+      clientId // Optional: for admin usage
     } = body;
 
     console.log("📝 [supplier/create] Request data:", {
@@ -28,44 +29,59 @@ export async function POST(request: NextRequest) {
       businessType,
       ein: ein ? "***" : null,
       domain,
-      hasPassword: !!password
+      hasPassword: !!password,
+      hasClientId: !!clientId
     });
 
     // Validate required fields
-    if (!companyName || !contactEmail || !password) {
+    if (!companyName || !contactEmail) {
       console.error("❌ [supplier/create] Missing required fields");
       return NextResponse.json(
-        { error: "Company name, contact email, and password are required" },
+        { error: "Company name and contact email are required" },
         { status: 400 }
       );
     }
 
-    // Check if user already exists
-    console.log("🔍 [supplier/create] Checking if user already exists...");
-    const { data: existingUser, error: userCheckError } = await supabase.auth.admin.getUserByEmail(contactEmail);
+    // Check if supplier with this email already exists
+    console.log("🔍 [supplier/create] Checking if supplier already exists...");
+    const { data: existingSupplier, error: existingError } = await supabase
+      .from("suppliers")
+      .select("id")
+      .eq("contact_email", contactEmail)
+      .single()
     
-    if (userCheckError) {
-      console.error("❌ [supplier/create] Error checking existing user:", userCheckError);
+    if (existingError && existingError.code !== 'PGRST116') {
+      console.error("❌ [supplier/create] Error checking existing supplier:", existingError);
       return NextResponse.json(
-        { error: "Failed to check existing user" },
+        { error: "Failed to check existing supplier" },
         { status: 500 }
       );
     }
-
-    if (existingUser) {
-      console.error("❌ [supplier/create] User already exists with email:", contactEmail);
+    
+    if (existingSupplier) {
+      console.error("❌ [supplier/create] Supplier already exists with email:", contactEmail);
       return NextResponse.json(
-        { error: "A user with this email already exists" },
+        { error: "A supplier with this email already exists" },
         { status: 409 }
       );
+    }
+
+    // Determine password to use
+    let finalPassword = password;
+    let tempPassword = null;
+    
+    if (!password) {
+      // Generate temporary password if none provided (admin usage)
+      tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
+      finalPassword = tempPassword;
     }
 
     // Create the user account
     console.log("👤 [supplier/create] Creating user account...");
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email: contactEmail,
-      password: password,
-      email_confirm: true,
+      password: finalPassword,
+      email_confirm: !!password, // Auto-confirm if password provided (public signup)
       user_metadata: {
         role: "supplier",
         company_name: companyName,
@@ -106,7 +122,8 @@ export async function POST(request: NextRequest) {
         ein: ein || null,
         domain: domain || null,
         status: "pending",
-        overall_risk_level: "medium"
+        overall_risk_level: "medium",
+        client_id: clientId || null
       })
       .select()
       .single();
@@ -152,6 +169,53 @@ export async function POST(request: NextRequest) {
       console.log("✅ [supplier/create] Supplier role assigned successfully");
     }
 
+    // If a client is assigned, create the relationship
+    if (clientId) {
+      console.log("🔗 [supplier/create] Creating supplier-client relationship...");
+      const { error: relationshipError } = await supabase
+        .from("supplier_client_relationships")
+        .insert({
+          client_id: clientId,
+          supplier_id: userId,
+          status: "active",
+          relationship_start_date: new Date().toISOString(),
+        });
+
+      if (relationshipError) {
+        console.error("❌ [supplier/create] Error creating supplier-client relationship:", relationshipError);
+        // Don't fail the request, but log the error
+      } else {
+        console.log("✅ [supplier/create] Supplier-client relationship created successfully");
+      }
+    }
+
+    // Send invitation email automatically if no password provided (admin usage)
+    if (!password && tempPassword) {
+      console.log("📧 [supplier/create] Sending invitation email...");
+      try {
+        const { error: emailError } = await supabase.auth.admin.generateLink({
+          type: 'signup',
+          email: contactEmail,
+          password: tempPassword,
+          options: {
+            redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`,
+            data: {
+              company_name: companyName,
+              temp_password: tempPassword
+            }
+          }
+        });
+        
+        if (emailError) {
+          console.error("❌ [supplier/create] Error sending invitation email:", emailError);
+        } else {
+          console.log("✅ [supplier/create] Invitation email sent successfully");
+        }
+      } catch (emailErr) {
+        console.error("❌ [supplier/create] Error with email invitation:", emailErr);
+      }
+    }
+
     // Verify the complete setup
     console.log("🔍 [supplier/create] Verifying complete setup...");
     const { data: verificationData, error: verificationError } = await supabase
@@ -170,19 +234,33 @@ export async function POST(request: NextRequest) {
 
     console.log("✅ [supplier/create] Complete setup verified successfully");
 
-    return NextResponse.json({
-      message: "Supplier account created successfully",
-      user: {
-        id: userId,
-        email: contactEmail,
-        role: "supplier"
-      },
-      supplier: {
-        id: supplierData.id,
-        company_name: supplierData.company_name,
-        status: supplierData.status
-      }
-    });
+    // Return appropriate response based on request type
+    if (!password && tempPassword) {
+      // Admin request (no password provided)
+      return NextResponse.json({ 
+        success: true, 
+        supplier_id: supplierData.id,
+        user_id: userId,
+        temp_password: tempPassword,
+        contactEmail: contactEmail,
+        message: "Supplier created successfully. User will receive an email to confirm their account."
+      });
+    } else {
+      // Public signup (password provided)
+      return NextResponse.json({
+        message: "Supplier account created successfully",
+        user: {
+          id: userId,
+          email: contactEmail,
+          role: "supplier"
+        },
+        supplier: {
+          id: supplierData.id,
+          company_name: supplierData.company_name,
+          status: supplierData.status
+        }
+      });
+    }
 
   } catch (error) {
     console.error("💥 [supplier/create] Unexpected error:", error);

@@ -61,21 +61,26 @@ The supplier signup system allows businesses to create accounts and join the Syn
 
 ## API Endpoints
 
-### Supplier Creation API (Public Signup)
+### Supplier Creation API (Consolidated)
 - **URL**: `/api/supplier/create`
 - **Method**: POST
 - **File**: `src/app/api/supplier/create/route.ts`
+- **Usage**: 
+  - **Public Signup**: Include `password` field for self-service registration
+  - **Admin Creation**: Omit `password` field for admin-created accounts (generates temp password automatically)
+  - **Client Assignment**: Include `clientId` field to automatically link supplier to client
 
 ### Admin Supplier Creation API
-- **URL**: `/api/admin/create-supplier`
+- **URL**: `/api/supplier/create` (same as public signup)
 - **Method**: POST
-- **File**: `src/app/api/admin/create-supplier/route.ts`
-- **Authentication**: Requires admin role
+- **File**: `src/app/api/supplier/create/route.ts`
+- **Authentication**: Admin must be logged in (no additional checks needed)
 - **Features**: 
   - Creates supplier profile AND user account
-  - Generates temporary password
-  - Sends invitation email
+  - Generates temporary password automatically
+  - Sends invitation email automatically
   - Assigns supplier role
+  - Can optionally assign to specific client
   - Returns temporary password for admin reference
 
 **Request Body:**

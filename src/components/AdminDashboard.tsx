@@ -36,7 +36,7 @@ export default async function AdminDashboard() {
 
   // Fetch the user's active role from `user_roles`. Use maybeSingle since a role may not exist.
   type UserRoleRow = { role: string | null; assigned_at: string | null; is_active: boolean | null };
-  let userRole: UserRoleRow | null = null;
+  let _userRole: UserRoleRow | null = null;
   if (userId) {
     const { data: roleData, error: roleError } = await supabase
       .from('user_roles')
@@ -48,7 +48,7 @@ export default async function AdminDashboard() {
     if (roleError) {
       console.error('Error fetching user role', roleError);
     } else {
-      userRole = (roleData as unknown) as UserRoleRow | null;
+      _userRole = (roleData as unknown) as UserRoleRow | null;
     }
   }
 
